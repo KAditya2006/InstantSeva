@@ -127,8 +127,8 @@ if (hasFrontendBuild) {
   // Serve static assets from the frontend build
   app.use(express.static(frontendDistPath));
 
-  // Catch-all route to serve index.html for React SPA (Express 5 syntax)
-  app.get('(.*)', (req, res) => {
+  // Catch-all route to serve index.html for React SPA (Express 5 named wildcard)
+  app.get('/*splat', (req, res) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 } else {
