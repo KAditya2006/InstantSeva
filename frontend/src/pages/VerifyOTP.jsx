@@ -90,9 +90,9 @@ const VerifyOTP = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">
       <div className="max-w-md w-full">
-        <button onClick={() => navigate('/signup')} className="mb-12 flex items-center gap-2 text-slate-500 hover:text-primary-600 transition-colors font-medium">
+        <button onClick={() => navigate('/signup')} className="mb-8 sm:mb-12 flex items-center gap-2 text-slate-500 hover:text-primary-600 transition-colors font-medium">
           <ArrowLeft size={18} /> Back to Signup
         </button>
 
@@ -100,12 +100,12 @@ const VerifyOTP = () => {
           <div className="w-20 h-20 bg-primary-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-primary-600">
             <ShieldCheck size={40} />
           </div>
-          <h1 className="text-3xl font-bold font-heading text-slate-900 mb-2">Verify your Email</h1>
-          <p className="text-slate-500">We've sent a 6-digit code to <span className="text-slate-900 font-semibold">{email}</span></p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mb-2">Verify your Email</h1>
+          <p className="text-slate-500 break-words">We've sent a 6-digit code to <span className="text-slate-900 font-semibold">{email}</span></p>
         </div>
 
-        <form onSubmit={handleVerify} className="space-y-10">
-          <div className="flex justify-between gap-2">
+        <form onSubmit={handleVerify} className="space-y-8 sm:space-y-10">
+          <div className="flex justify-between gap-1 sm:gap-2">
             {otp.map((digit, i) => (
               <input 
                 key={i}
@@ -115,7 +115,7 @@ const VerifyOTP = () => {
                 value={digit}
                 onChange={(e) => handleChange(e, i)}
                 onKeyDown={(e) => handleKeyDown(e, i)}
-                className="w-12 h-16 md:w-14 md:h-18 text-center text-2xl font-bold bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-primary-500 focus:bg-white transition-all"
+                className="w-10 h-14 sm:w-12 sm:h-16 md:w-14 md:h-[72px] text-center text-xl sm:text-2xl font-bold bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-primary-500 focus:bg-white transition-all"
               />
             ))}
           </div>

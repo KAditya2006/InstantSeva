@@ -76,12 +76,12 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
-        <section className="bg-white rounded-3xl border border-slate-100 premium-shadow p-8 flex flex-col md:flex-row gap-6 md:items-center justify-between">
-          <div className="flex items-center gap-5">
-            <img src={user?.avatar} alt={user?.name} className="w-20 h-20 rounded-3xl object-cover" />
-            <div>
-              <h1 className="text-3xl font-bold font-heading text-slate-900">{user?.name}</h1>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
+        <section className="bg-white rounded-3xl border border-slate-100 premium-shadow p-4 sm:p-8 flex flex-col md:flex-row gap-5 sm:gap-6 md:items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 min-w-0">
+            <img src={user?.avatar} alt={user?.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl object-cover" />
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 break-words">{user?.name}</h1>
               <p className="text-slate-500">{user?.email}</p>
               <span className="inline-block mt-2 bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-xs font-bold uppercase">{user?.role}</span>
             </div>
@@ -95,24 +95,24 @@ const Profile = () => {
           </div>
 
           {loading ? (
-            <div className="bg-white rounded-3xl p-12 text-center text-slate-400 font-bold">Loading bookings...</div>
+            <div className="bg-white rounded-3xl p-8 sm:p-12 text-center text-slate-400 font-bold">Loading bookings...</div>
           ) : bookings.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-slate-100">
+            <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-100">
               <p className="font-bold text-slate-700">No bookings yet.</p>
               <p className="text-slate-400 mt-2">Your service requests and assigned jobs will appear here.</p>
             </div>
           ) : bookings.map((booking) => {
             const otherPerson = user?.role === 'worker' ? booking.user : booking.worker;
             return (
-              <article key={booking._id} className="bg-white rounded-3xl border border-slate-100 premium-shadow p-6 flex flex-col lg:flex-row gap-5 lg:items-center justify-between">
-                <div className="space-y-2">
+              <article key={booking._id} className="bg-white rounded-3xl border border-slate-100 premium-shadow p-4 sm:p-6 flex flex-col lg:flex-row gap-5 lg:items-center justify-between">
+                <div className="space-y-2 min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-xl font-bold text-slate-900">{booking.service}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words">{booking.service}</h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${statusStyles[booking.status] || statusStyles.pending}`}>{booking.status}</span>
                   </div>
-                  <p className="text-slate-500">With {otherPerson?.name} at {booking.address}</p>
-                  <p className="flex items-center gap-2 text-sm font-bold text-slate-500">
-                    <Clock size={16} /> {format(new Date(booking.scheduledDate), 'PPp')}
+                  <p className="text-slate-500 break-words">With {otherPerson?.name} at {booking.address}</p>
+                  <p className="flex items-start gap-2 text-sm font-bold text-slate-500">
+                    <Clock size={16} className="mt-0.5 shrink-0" /> <span>{format(new Date(booking.scheduledDate), 'PPp')}</span>
                   </p>
                   <p className="text-sm font-bold text-slate-500">
                     {formatInr(booking.totalPrice)} - Payment {booking.paymentStatus}
@@ -120,7 +120,7 @@ const Profile = () => {
                   {booking.additionalNotes && <p className="text-slate-600">{booking.additionalNotes}</p>}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 lg:justify-end">
                   {user?.role === 'worker' && booking.status === 'pending' && (
                     <>
                       <button onClick={() => changeStatus(booking._id, 'accepted')} className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold flex items-center gap-2"><CheckCircle2 size={18} /> Accept</button>
@@ -139,7 +139,7 @@ const Profile = () => {
                 </div>
 
                 {user?.role === 'user' && booking.status === 'completed' && !booking.review && (
-                  <div className="lg:basis-full grid md:grid-cols-[140px_1fr_auto] gap-3 pt-4 border-t border-slate-100">
+                  <div className="lg:basis-full grid sm:grid-cols-[140px_1fr_auto] gap-3 pt-4 border-t border-slate-100">
                     <select value={reviewForms[booking._id]?.rating || 5} onChange={(e) => setReviewForms({ ...reviewForms, [booking._id]: { ...reviewForms[booking._id], rating: Number(e.target.value) } })} className="bg-slate-50 rounded-xl px-3 py-2 outline-none">
                       {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}
                     </select>
@@ -157,7 +157,7 @@ const Profile = () => {
           })}
 
           {pagination.pages > 1 && (
-            <div className="flex justify-center gap-3 pt-4">
+            <div className="flex flex-wrap justify-center gap-3 pt-4">
               <button disabled={pagination.page <= 1} onClick={() => fetchBookings(pagination.page - 1)} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">Previous</button>
               <span className="px-5 py-3 text-slate-500 font-bold">Page {pagination.page} of {pagination.pages}</span>
               <button disabled={pagination.page >= pagination.pages} onClick={() => fetchBookings(pagination.page + 1)} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">Next</button>

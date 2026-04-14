@@ -142,13 +142,13 @@ const ChatPage = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-400">Loading your conversations...</div>;
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <div className="min-h-screen md:h-screen flex flex-col bg-slate-50 md:overflow-hidden">
       <Navbar />
 
-      <main className="flex-1 flex overflow-hidden p-6 gap-6">
+      <main className="flex-1 flex flex-col md:flex-row md:overflow-hidden p-3 sm:p-6 gap-4 sm:gap-6 min-h-0">
         {/* Chat List */}
-        <div className="w-full md:w-[380px] bg-white rounded-[40px] premium-shadow border border-slate-100 flex flex-col overflow-hidden">
-          <div className="p-8 border-b border-slate-50">
+        <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[380px] bg-white rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100 flex-col overflow-hidden min-h-[60vh] md:min-h-0`}>
+          <div className="p-4 sm:p-8 border-b border-slate-50">
             <h1 className="text-2xl font-bold font-heading text-slate-900 mb-6">Messages</h1>
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -186,39 +186,40 @@ const ChatPage = () => {
                 </div>
               </div>
             )) : (
-              <div className="p-12 text-center text-slate-400 font-bold italic">No messages yet</div>
+            <div className="p-8 sm:p-12 text-center text-slate-400 font-bold italic">No messages yet</div>
             )}
           </div>
         </div>
 
         {/* Chat Window */}
-        <div className="flex-1 bg-white rounded-[40px] premium-shadow border border-slate-100 flex flex-col overflow-hidden relative">
+        <div className={`${activeChat ? 'flex' : 'hidden md:flex'} flex-1 bg-white rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100 flex-col overflow-hidden relative min-h-[75vh] md:min-h-0`}>
           {activeChat ? (
             <>
               {/* Window Header */}
-              <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
+              <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-50 flex justify-between items-center gap-3 bg-white/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-4">
+                  <button onClick={() => setActiveChat(null)} className="md:hidden text-slate-400 font-bold text-xl">Back</button>
                   <img 
                     src={activeChat.participants.find(p => p._id !== user.id)?.avatar} 
                     className="w-12 h-12 rounded-2xl object-cover" 
                     alt="Active" 
                   />
                   <div>
-                    <h3 className="font-bold text-slate-900 text-lg">{activeChat.participants.find(p => p._id !== user.id)?.name}</h3>
+                    <h3 className="font-bold text-slate-900 text-base sm:text-lg truncate max-w-[150px] sm:max-w-none">{activeChat.participants.find(p => p._id !== user.id)?.name}</h3>
                     <div className="flex items-center gap-2">
                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Active Now</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-2">
                    <button className="p-3 text-slate-400 hover:text-primary-600 hover:bg-slate-50 rounded-2xl transition-all"><Phone size={20} /></button>
                    <button className="p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"><MoreVertical size={20} /></button>
                 </div>
               </div>
 
               {/* Message Feed */}
-              <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-slate-50/20">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-10 space-y-6 sm:space-y-8 custom-scrollbar bg-slate-50/20">
                 {msgLoading ? (
                   <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-primary-600" size={32} /></div>
                 ) : (
@@ -235,8 +236,8 @@ const ChatPage = () => {
                     )}
                     {messages.map((msg, i) => (
                       <div key={i} className={`flex ${msg.sender._id === user.id ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[70%] space-y-2 ${msg.sender._id === user.id ? 'items-end' : 'items-start'}`}>
-                          <div className={`p-4 rounded-[28px] premium-shadow font-medium tracking-tight ${msg.sender._id === user.id ? 'bg-primary-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'}`}>
+                        <div className={`max-w-[86%] sm:max-w-[70%] space-y-2 ${msg.sender._id === user.id ? 'items-end' : 'items-start'}`}>
+                          <div className={`p-3 sm:p-4 rounded-2xl sm:rounded-[28px] premium-shadow font-medium tracking-tight break-words ${msg.sender._id === user.id ? 'bg-primary-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'}`}>
                              {msg.messageType === 'image' ? (
                                <img src={msg.imageUrl} className="max-w-full rounded-2xl cursor-pointer" alt="Sent" onClick={() => window.open(msg.imageUrl, '_blank')} />
                              ) : msg.content}
@@ -254,8 +255,8 @@ const ChatPage = () => {
               </div>
 
               {/* Message Input */}
-              <div className="p-8 bg-white border-t border-slate-50">
-                 <form onSubmit={handleSend} className="bg-slate-50 p-2 rounded-[32px] border border-slate-100 flex items-center gap-2 premium-shadow focus-within:border-primary-400 focus-within:bg-white transition-all">
+              <div className="p-3 sm:p-8 bg-white border-t border-slate-50">
+                 <form onSubmit={handleSend} className="bg-slate-50 p-2 rounded-2xl sm:rounded-[32px] border border-slate-100 flex items-center gap-2 premium-shadow focus-within:border-primary-400 focus-within:bg-white transition-all">
                     <label className="p-3 text-slate-400 hover:text-primary-600 cursor-pointer transition-colors">
                        <ImageIcon size={22} />
                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
@@ -267,14 +268,14 @@ const ChatPage = () => {
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                     />
-                    <button type="submit" className="bg-primary-600 text-white p-4 rounded-3xl hover:bg-primary-700 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary-200">
+                    <button type="submit" className="bg-primary-600 text-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl hover:bg-primary-700 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary-200">
                        <Send size={22} />
                     </button>
                  </form>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center">
                <div className="w-24 h-24 bg-primary-50 rounded-[40px] flex items-center justify-center mb-8 text-primary-600 shadow-xl shadow-primary-100/50">
                   <MessageSquare size={48} />
                </div>

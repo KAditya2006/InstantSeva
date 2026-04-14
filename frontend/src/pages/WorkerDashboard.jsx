@@ -122,10 +122,10 @@ const WorkerDashboard = () => {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Sidebar Nav */}
         <aside className="w-full lg:w-64 space-y-2">
-          <nav className="bg-white p-4 rounded-3xl premium-shadow border border-slate-100 flex lg:flex-col gap-2 overflow-x-auto">
+          <nav className="bg-white p-3 sm:p-4 rounded-3xl premium-shadow border border-slate-100 flex lg:flex-col gap-2 overflow-x-auto">
             <button onClick={() => setActiveSection('overview')} className={`flex-1 lg:flex-none flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all whitespace-nowrap ${activeSection === 'overview' ? 'bg-primary-50 text-primary-600' : 'text-slate-500 hover:bg-slate-50'}`}>
               <LayoutDashboard size={20} /> Dashboard
             </button>
@@ -145,7 +145,7 @@ const WorkerDashboard = () => {
         <main className="flex-1 space-y-8">
           {/* Status Banner */}
           {profile?.approvalStatus === 'pending' && profile?.kyc?.status === 'pending' && (
-            <div className="bg-amber-50 border border-amber-200 p-6 rounded-[32px] flex items-start gap-4">
+            <div className="bg-amber-50 border border-amber-200 p-4 sm:p-6 rounded-3xl md:rounded-[32px] flex items-start gap-4">
               <Clock className="text-amber-500 mt-1" size={24} />
               <div>
                 <h4 className="font-bold text-amber-900 text-lg">Verification in Progress</h4>
@@ -155,7 +155,7 @@ const WorkerDashboard = () => {
           )}
 
           {profile?.approvalStatus === 'pending' && profile?.kyc?.status === 'none' && (
-            <div className="bg-primary-50 border border-primary-200 p-6 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="bg-primary-50 border border-primary-200 p-4 sm:p-6 rounded-3xl md:rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-start gap-4">
                 <AlertCircle className="text-primary-600 mt-1" size={24} />
                 <div>
@@ -168,7 +168,7 @@ const WorkerDashboard = () => {
           )}
 
           {profile?.approvalStatus === 'approved' && (
-            <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-[32px] flex items-start gap-4">
+            <div className="bg-emerald-50 border border-emerald-200 p-4 sm:p-6 rounded-3xl md:rounded-[32px] flex items-start gap-4">
               <CheckCircle2 className="text-emerald-500 mt-1" size={24} />
               <div>
                 <h4 className="font-bold text-emerald-900 text-lg">Account Verified</h4>
@@ -178,8 +178,8 @@ const WorkerDashboard = () => {
           )}
 
           {/* Stats Cards */}
-          {visibleSections.overview && <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-[32px] premium-shadow border border-slate-100">
+          {visibleSections.overview && <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div className="bg-white p-5 sm:p-6 rounded-3xl md:rounded-[32px] premium-shadow border border-slate-100">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl"><DollarSign size={24} /></div>
                 <span className="text-emerald-500 font-bold flex items-center gap-1 text-sm bg-emerald-50 px-2 py-0.5 rounded-lg">+12.5%</span>
@@ -187,14 +187,14 @@ const WorkerDashboard = () => {
               <h3 className="text-3xl font-bold text-slate-900 font-heading tracking-tight">{formatInr(estimatedEarnings)}</h3>
               <p className="text-slate-500 font-bold text-sm">Total Earnings</p>
             </div>
-            <div className="bg-white p-6 rounded-[32px] premium-shadow border border-slate-100">
+            <div className="bg-white p-5 sm:p-6 rounded-3xl md:rounded-[32px] premium-shadow border border-slate-100">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><Briefcase size={24} /></div>
               </div>
               <h3 className="text-3xl font-bold text-slate-900 font-heading tracking-tight">{completedJobs.length}</h3>
               <p className="text-slate-500 font-bold text-sm">Jobs Completed</p>
             </div>
-            <div className="bg-white p-6 rounded-[32px] premium-shadow border border-slate-100">
+            <div className="bg-white p-5 sm:p-6 rounded-3xl md:rounded-[32px] premium-shadow border border-slate-100">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl"><Star size={24} /></div>
               </div>
@@ -205,13 +205,13 @@ const WorkerDashboard = () => {
 
           {/* KYC Upload Panel (Visible only if status is none or rejected) */}
           {visibleSections.kyc && (profile?.kyc?.status === 'none' || profile?.kyc?.status === 'rejected') && (
-            <section className="bg-white p-8 rounded-[40px] premium-shadow border border-slate-100">
+            <section className="bg-white p-4 sm:p-8 rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100">
               <h3 className="text-2xl font-bold text-slate-900 mb-8 font-heading">KYC Verification Flow</h3>
               <form onSubmit={handleKycSubmit} className="space-y-8">
                  <div className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                        <p className="font-bold text-slate-700">1. Government ID (Aadhaar/Passport)</p>
-                       <label className="border-2 border-dashed border-slate-200 rounded-3xl p-12 flex flex-col items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-all group">
+                       <label className="border-2 border-dashed border-slate-200 rounded-3xl p-6 sm:p-12 flex flex-col items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-all group">
                           <Upload className="text-slate-400 group-hover:text-primary-600 transition-colors mb-4" size={32} />
                           <span className="text-slate-500 font-bold text-sm">{kycFiles.idProof ? kycFiles.idProof.name : 'Click to Upload ID Proof'}</span>
                           <input type="file" className="hidden" onChange={(e) => setKycFiles({...kycFiles, idProof: e.target.files[0]})} />
@@ -219,7 +219,7 @@ const WorkerDashboard = () => {
                     </div>
                     <div className="space-y-4">
                        <p className="font-bold text-slate-700">2. Professional Selfie</p>
-                       <label className="border-2 border-dashed border-slate-200 rounded-3xl p-12 flex flex-col items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-all group">
+                       <label className="border-2 border-dashed border-slate-200 rounded-3xl p-6 sm:p-12 flex flex-col items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-all group">
                           <Upload className="text-slate-400 group-hover:text-primary-600 transition-colors mb-4" size={32} />
                           <span className="text-slate-500 font-bold text-sm">{kycFiles.selfie ? kycFiles.selfie.name : 'Click to Upload Selfie'}</span>
                           <input type="file" className="hidden" onChange={(e) => setKycFiles({...kycFiles, selfie: e.target.files[0]})} />
@@ -238,9 +238,9 @@ const WorkerDashboard = () => {
           )}
 
           {/* Profile Overview (Always visible) */}
-          {visibleSections.overview && <section className="bg-white p-8 rounded-[40px] premium-shadow border border-slate-100">
+          {visibleSections.overview && <section className="bg-white p-4 sm:p-8 rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100">
             <h3 className="text-2xl font-bold text-slate-900 mb-8 font-heading">Public Profile Overview</h3>
-            <div className="flex flex-col md:flex-row gap-10 items-start">
+            <div className="flex flex-col md:flex-row gap-6 sm:gap-10 items-start">
                <div className="w-32 h-32 rounded-[32px] overflow-hidden border-4 border-slate-50">
                   <img src={profile?.user?.avatar} alt="Profile" className="w-full h-full object-cover" />
                </div>
@@ -267,7 +267,7 @@ const WorkerDashboard = () => {
             </div>
           </section>}
 
-          {visibleSections.profile && <section className="bg-white p-8 rounded-[40px] premium-shadow border border-slate-100">
+          {visibleSections.profile && <section className="bg-white p-4 sm:p-8 rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100">
             <h3 className="text-2xl font-bold text-slate-900 mb-8 font-heading">Profile Settings</h3>
             <form onSubmit={handleProfileSubmit} className="grid md:grid-cols-2 gap-5">
               <input value={profileForm.skills} onChange={(e) => setProfileForm({ ...profileForm, skills: e.target.value })} placeholder="Skills separated by commas" className="bg-slate-50 rounded-2xl px-4 py-4 outline-none" />
@@ -289,13 +289,13 @@ const WorkerDashboard = () => {
             </form>
           </section>}
 
-          {visibleSections.jobs && <section className="bg-white p-8 rounded-[40px] premium-shadow border border-slate-100">
+          {visibleSections.jobs && <section className="bg-white p-4 sm:p-8 rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100">
             <h3 className="text-2xl font-bold text-slate-900 mb-8 font-heading">My Jobs</h3>
             <div className="space-y-4">
               {bookings.length === 0 ? (
                 <p className="text-slate-400 font-bold italic">No assigned jobs yet.</p>
               ) : bookings.map((booking) => (
-                <div key={booking._id} className="border border-slate-100 rounded-3xl p-5 flex flex-col md:flex-row gap-4 md:items-center justify-between">
+                <div key={booking._id} className="border border-slate-100 rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:items-center justify-between">
                   <div>
                     <p className="font-bold text-slate-900">{booking.service}</p>
                     <p className="text-sm text-slate-500">{booking.user?.name} - {format(new Date(booking.scheduledDate), 'PPp')}</p>
@@ -317,7 +317,7 @@ const WorkerDashboard = () => {
                 </div>
               ))}
               {jobsPagination.pages > 1 && (
-                <div className="flex justify-center gap-3 pt-4">
+                <div className="flex flex-wrap justify-center gap-3 pt-4">
                   <button disabled={jobsPagination.page <= 1} onClick={() => fetchBookings(jobsPagination.page - 1)} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">Previous</button>
                   <span className="px-5 py-3 text-slate-500 font-bold">Page {jobsPagination.page} of {jobsPagination.pages}</span>
                   <button disabled={jobsPagination.page >= jobsPagination.pages} onClick={() => fetchBookings(jobsPagination.page + 1)} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">Next</button>

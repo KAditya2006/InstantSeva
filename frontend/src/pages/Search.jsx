@@ -92,20 +92,20 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
         <section>
-          <h1 className="text-4xl font-bold font-heading text-slate-900">Find Local Experts</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-heading text-slate-900">Find Local Experts</h1>
           <p className="text-slate-500 mt-2">Search approved professionals and send a booking request in minutes.</p>
         </section>
 
-        <form onSubmit={fetchWorkers} className="bg-white border border-slate-100 premium-shadow rounded-3xl p-4 grid md:grid-cols-[1fr_180px_180px_auto] gap-3">
+        <form onSubmit={fetchWorkers} className="bg-white border border-slate-100 premium-shadow rounded-3xl p-3 sm:p-4 grid lg:grid-cols-[1fr_180px_180px_auto] gap-3">
           <div className="flex items-center gap-3 bg-slate-50 rounded-2xl px-4">
             <SearchIcon size={18} className="text-slate-400" />
             <input
               value={filters.service}
               onChange={(e) => setFilters({ ...filters, service: e.target.value, page: 1 })}
               placeholder="Plumber, electrician, tutor..."
-              className="w-full bg-transparent py-4 outline-none font-medium"
+              className="w-full min-w-0 bg-transparent py-4 outline-none font-medium"
             />
           </div>
           <input
@@ -134,12 +134,12 @@ const SearchPage = () => {
           {loading ? (
             <div className="md:col-span-2 xl:col-span-3 text-center py-20 text-slate-400 font-bold">Searching workers...</div>
           ) : workers.length === 0 ? (
-            <div className="md:col-span-2 xl:col-span-3 bg-white rounded-3xl p-12 text-center border border-slate-100">
+            <div className="md:col-span-2 xl:col-span-3 bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-100">
               <p className="font-bold text-slate-700">No approved workers found.</p>
               <p className="text-slate-400 mt-2">Try another service or remove a price/rating filter.</p>
             </div>
           ) : workers.map((worker) => (
-            <article key={worker._id} className="bg-white rounded-3xl p-6 border border-slate-100 premium-shadow flex flex-col gap-5">
+            <article key={worker._id} className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 premium-shadow flex flex-col gap-5">
               <div className="flex gap-4">
                 <img src={worker.user?.avatar} alt={worker.user?.name} className="w-16 h-16 rounded-2xl object-cover" />
                 <div className="min-w-0">
@@ -155,8 +155,8 @@ const SearchPage = () => {
                   <span key={skill} className="bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-sm font-bold">{skill}</span>
                 ))}
               </div>
-              <div className="flex items-center justify-between text-sm text-slate-500">
-                <span className="flex items-center gap-1"><MapPin size={16} /> {worker.user?.location?.address || 'Nearby'}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-slate-500">
+                <span className="flex items-start gap-1 min-w-0"><MapPin size={16} className="mt-0.5 shrink-0" /> <span className="break-words">{worker.user?.location?.address || 'Nearby'}</span></span>
                 <span className="font-bold text-slate-900">{formatInr(worker.pricing?.amount)}/{worker.pricing?.unit || 'hour'}</span>
               </div>
               <div className="grid grid-cols-2 gap-3 mt-auto">
@@ -172,7 +172,7 @@ const SearchPage = () => {
         </section>
 
         {pagination.pages > 1 && (
-          <div className="flex justify-center gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
             <button disabled={pagination.page <= 1} onClick={() => setFilters({ ...filters, page: pagination.page - 1 })} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">Previous</button>
             <span className="px-5 py-3 text-slate-500 font-bold">Page {pagination.page} of {pagination.pages}</span>
             <button disabled={pagination.page >= pagination.pages} onClick={() => setFilters({ ...filters, page: pagination.page + 1 })} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">Next</button>
@@ -181,8 +181,8 @@ const SearchPage = () => {
       </main>
 
       {selectedWorker && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6">
-          <form onSubmit={handleBookingSubmit} className="bg-white w-full max-w-lg rounded-3xl p-8 premium-shadow space-y-5">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+          <form onSubmit={handleBookingSubmit} className="bg-white w-full max-w-lg rounded-3xl p-4 sm:p-8 premium-shadow space-y-5 max-h-[92vh] overflow-y-auto">
             <div>
               <h2 className="text-2xl font-bold font-heading text-slate-900">Book {selectedWorker.user?.name}</h2>
               <p className="text-slate-500">Send a request with your preferred schedule.</p>

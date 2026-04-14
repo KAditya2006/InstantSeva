@@ -41,8 +41,8 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-100 premium-shadow p-8 space-y-8">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-100 premium-shadow p-6 sm:p-8 space-y-8">
         <Link to="/login" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-primary-600">
           <ArrowLeft size={16} /> Back to login
         </Link>
@@ -51,7 +51,7 @@ const ForgotPassword = () => {
           <div className="w-14 h-14 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center mb-5">
             <KeyRound size={28} />
           </div>
-          <h1 className="text-3xl font-bold font-heading text-slate-900">Reset Password</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">Reset Password</h1>
           <p className="text-slate-500 mt-2">Use your email to receive a short-lived reset code.</p>
         </div>
 

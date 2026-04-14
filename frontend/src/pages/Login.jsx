@@ -4,6 +4,7 @@ import { loginUser } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import BrandLogo from '../components/BrandLogo';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -37,12 +38,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 bg-auth-pattern">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 bg-auth-pattern">
       <div className="w-full max-w-md">
-        <div className="bg-white p-8 md:p-12 rounded-[40px] premium-shadow border border-slate-100">
-          <div className="text-center mb-10">
-            <Link to="/" className="inline-block text-2xl font-bold font-heading text-primary-600 mb-8">HyperlocalMarket</Link>
-            <h1 className="text-3xl font-bold font-heading text-slate-900 mb-2">Welcome Back</h1>
+        <div className="bg-white p-6 sm:p-8 md:p-12 rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100">
+          <div className="text-center mb-8 sm:mb-10">
+            <Link to="/" className="inline-flex justify-center mb-8" aria-label="HyperlocalMarket home">
+              <BrandLogo />
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mb-2">Welcome Back</h1>
             <p className="text-slate-500 font-medium">Please enter your details to sign in.</p>
           </div>
 
@@ -72,7 +75,7 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
               <label className="flex items-center gap-2 text-slate-600 font-medium cursor-pointer">
                 <input type="checkbox" className="w-4 h-4 rounded accent-primary-600" /> Remember me
               </label>
@@ -97,7 +100,7 @@ const Login = () => {
             <div className="relative flex justify-center text-sm"><span className="px-4 bg-white text-slate-400 font-medium uppercase tracking-widest text-[10px]">Or continue with</span></div>
           </div>
 
-          <div className="mt-8 flex gap-4">
+          <div className="mt-8 grid sm:grid-cols-2 gap-4">
             <button className="flex-1 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 text-slate-600 font-bold text-sm">
               <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="currentColor" d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.66-.3-5.46-1.33-5.46-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23A11.5 11.5 0 0 1 12 5.8c1.02 0 2.04.14 3 .4 2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.93.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.57A12 12 0 0 0 12 .5Z" />
