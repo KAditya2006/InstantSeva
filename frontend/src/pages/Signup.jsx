@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../services/api';
-import { User, Mail, Lock, Briefcase, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, Briefcase, ArrowRight, Home, Clock } from 'lucide-react';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 import toast from 'react-hot-toast';
 import BrandLogo from '../components/BrandLogo';
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    email: '', 
+    password: '', 
+    role: 'user',
+    address: '',
+    homeNumber: '',
+    professions: [],
+    experience: '',
+    bio: ''
+  });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -118,6 +129,74 @@ const Signup = () => {
                   className="w-full bg-white border border-slate-200 pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-primary-500 transition-colors font-medium"
                 />
               </div>
+
+              <div className="relative">
+                <AddressAutocomplete 
+                  value={formData.address}
+                  onChange={({ address, coordinates }) => setFormData({
+                    ...formData, 
+                    address,
+                    location: { ...formData.location, coordinates: coordinates || [0,0] }
+                  })}
+                  placeholder="Street Address / Location"
+                />
+              </div>
+
+              {formData.role === 'user' && (
+                <div className="relative">
+                  <Home className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Home Number (e.g., Apt 4B, House 12)" 
+                    required={formData.role === 'user'}
+                    value={formData.homeNumber}
+                    onChange={(e) => setFormData({...formData, homeNumber: e.target.value})}
+                    className="w-full bg-white border border-slate-200 pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-primary-500 transition-colors font-medium"
+                  />
+                </div>
+              )}
+
+              {formData.role === 'worker' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="relative">
+                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                      type="text" 
+                      placeholder="Your Professions (e.g., Plumber, Electrician)" 
+                      required={formData.role === 'worker'}
+                      value={formData.professions.join(', ')}
+                      onChange={(e) => setFormData({...formData, professions: e.target.value.split(',').map(p => p.trim()).filter(Boolean)})}
+                      className="w-full bg-white border border-slate-200 pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-primary-500 transition-colors font-medium"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1 ml-1 font-bold">Separate multiple professions with commas</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="relative">
+                      <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input 
+                        type="number" 
+                        placeholder="Years Exp." 
+                        required={formData.role === 'worker'}
+                        value={formData.experience}
+                        onChange={(e) => setFormData({...formData, experience: e.target.value})}
+                        className="w-full bg-white border border-slate-200 pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-primary-500 transition-colors font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <textarea 
+                      placeholder="Tell us about your services..." 
+                      required={formData.role === 'worker'}
+                      value={formData.bio}
+                      onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                      rows={3}
+                      className="w-full bg-white border border-slate-200 p-4 rounded-xl outline-none focus:border-primary-500 transition-colors font-medium resize-none"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <button 

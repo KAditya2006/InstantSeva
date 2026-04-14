@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: './backend/.env' });
 const connectDB = require('../config/db');
 const User = require('../models/User');
 const WorkerProfile = require('../models/WorkerProfile');
@@ -21,51 +21,51 @@ const seed = async () => {
   await connectDB();
 
   await ensureUser('admin@hyperlocal.test', { name: 'Admin User', role: 'admin', isVerified: true });
-  const customer = await ensureUser('customer@hyperlocal.test', { name: 'Customer User', role: 'user', isVerified: true });
-  const worker = await ensureUser('worker@hyperlocal.test', {
-      name: 'Ravi Electrician',
+  const customer = await ensureUser('customer@hyperlocal.test', { name: 'Customer User', role: 'user', isVerified: true, location: { type: 'Point', coordinates: [77.1025, 28.7041], address: 'Rohini, Delhi', homeNumber: 'H-12, Sector 9' } });
+  
+  const additionalLocations = [
+    { email: 'plumber1@test.com', name: 'Amit Plumber', profession: 'Plumbing', coords: [77.391, 28.5355], address: 'Sector 62, Noida' },
+    { email: 'electric1@test.com', name: 'Suresh Electric', profession: 'Electrical', coords: [77.0266, 28.4595], address: 'Cyber Hub, Gurgaon' },
+    { email: 'carpenter1@test.com', name: 'Vikram Woodwork', profession: 'Carpentry', coords: [77.2167, 28.6667], address: 'Civil Lines, Delhi' },
+    { email: 'tutor1@test.com', name: 'Priya Maths', profession: 'Tutors', coords: [77.3159, 28.5823], address: 'Sector 15, Noida' },
+    { email: 'multi1@test.com', name: 'All-Rounder Raj', professions: ['Plumbing', 'Electrical'], coords: [77.209, 28.6139], address: 'Connaught Place, Delhi' }
+  ];
+
+  const { getWorkerModel } = require('../models/WorkerModels');
+
+  for (const loc of additionalLocations) {
+    const user = await ensureUser(loc.email, {
+      name: loc.name,
       role: 'worker',
       isVerified: true,
-      location: { type: 'Point', coordinates: [77.209, 28.6139], address: 'New Delhi' }
+      location: { type: 'Point', coordinates: loc.coords, address: loc.address }
     });
 
-  await WorkerProfile.findOneAndUpdate(
-    { user: worker._id },
-    {
-      user: worker._id,
-      skills: ['Electrical', 'Repairing'],
-      experience: 5,
-      bio: 'Licensed electrician for home wiring, appliance repair, and quick emergency fixes.',
-      pricing: { amount: 700, unit: 'job' },
-      availability: true,
-      approvalStatus: 'approved',
-      kyc: { status: 'verified' }
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
+    const professions = loc.professions || [loc.profession];
+    const targetCollection = professions.length > 1 ? 'multi_professional' : professions[0];
+    const DynamicModel = getWorkerModel(targetCollection);
 
-  const booking = await Booking.findOneAndUpdate(
-    { user: customer._id, worker: worker._id, service: 'Fan repair' },
-    {
-      user: customer._id,
-      worker: worker._id,
-      service: 'Fan repair',
-      scheduledDate: new Date(Date.now() + 86400000),
-      status: 'completed',
-      address: 'Sample customer address',
-      additionalNotes: 'Ceiling fan makes noise at high speed.',
-      totalPrice: 700,
-      paymentStatus: 'paid',
-      paymentMethod: 'manual'
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
+    await DynamicModel.findOneAndUpdate(
+      { user: user._id },
+      {
+        user: user._id,
+        professions,
+        experience: 4,
+        bio: `Professional ${professions.join(' & ')} with years of local experience.`,
+        pricing: { amount: 500, unit: 'hour' },
+        availability: true,
+        approvalStatus: 'approved'
+      },
+      { upsert: true, new: true }
+    );
 
-  await Review.findOneAndUpdate(
-    { booking: booking._id },
-    { booking: booking._id, user: customer._id, worker: worker._id, rating: 5, comment: 'Quick, polite, and solved the issue.' },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
+    // Also sync to main WorkerProfile for global search
+    await WorkerProfile.findOneAndUpdate(
+      { user: user._id },
+      { user: user._id, skills: professions, experience: 4, bio: `Verified ${professions[0]}`, approvalStatus: 'approved' },
+      { upsert: true }
+    );
+  }
 
   console.log('Seed complete');
   console.log('Admin: admin@hyperlocal.test / password123');

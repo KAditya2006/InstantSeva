@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { createReview, getBookings, updateBookingPayment, updateBookingStatus } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +18,7 @@ const statusStyles = {
 
 const Profile = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewForms, setReviewForms] = useState({});
@@ -83,9 +85,18 @@ const Profile = () => {
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 break-words">{user?.name}</h1>
               <p className="text-slate-500">{user?.email}</p>
-              <span className="inline-block mt-2 bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-xs font-bold uppercase">{user?.role}</span>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span className="bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-xs font-bold uppercase">{user?.role}</span>
+                {user?.phone && <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold">{user.phone}</span>}
+              </div>
             </div>
           </div>
+          <button 
+            onClick={() => navigate('/profile/edit')}
+            className="px-6 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-all premium-shadow"
+          >
+            Edit Profile
+          </button>
         </section>
 
         <section className="space-y-4">

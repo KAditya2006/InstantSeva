@@ -34,6 +34,9 @@ export const getCurrentUser = () => api.get('/auth/me');
 export const forgotPassword = (data) => api.post('/auth/forgot-password', data);
 export const resetPassword = (data) => api.post('/auth/reset-password', data);
 
+// User APIs
+export const updateProfile = (data) => api.put('/user/profile', data);
+
 // Worker APIs
 export const getWorkerProfile = () => api.get('/worker/profile');
 export const updateWorkerProfile = (data) => api.patch('/worker/profile', data);

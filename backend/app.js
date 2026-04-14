@@ -47,6 +47,7 @@ const chatRoutes = require('./routes/chatRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const marketplaceRoutes = require('./routes/marketplaceRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/worker', workerRoutes);
@@ -55,6 +56,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/user', userRoutes);
 
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
 const hasFrontendBuild = require('fs').existsSync(path.join(frontendDistPath, 'index.html'));

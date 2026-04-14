@@ -1,4 +1,5 @@
 const WorkerProfile = require('../models/WorkerProfile');
+const { getWorkerModel } = require('../models/WorkerModels');
 const Review = require('../models/Review');
 const { getPagination } = require('../utils/bookingRules');
 const escapeRegex = require('../utils/escapeRegex');
@@ -13,11 +14,19 @@ exports.searchWorkers = async (req, res) => {
     };
 
     const searchTerm = service || q;
+    let CurrentModel = WorkerProfile;
+
+    // If searching for a specific service, try the dynamic collection first
+    if (service) {
+      CurrentModel = getWorkerModel(service);
+    }
+
     if (searchTerm) {
       const safeTerm = escapeRegex(searchTerm);
       filter.$or = [
-        { skills: { $regex: safeTerm, $options: 'i' } },
-        { bio: { $regex: safeTerm, $options: 'i' } }
+        { professions: { $regex: safeTerm, $options: 'i' } },
+        { bio: { $regex: safeTerm, $options: 'i' } },
+        { skills: { $regex: safeTerm, $options: 'i' } }
       ];
     }
 
@@ -29,8 +38,8 @@ exports.searchWorkers = async (req, res) => {
       filter['pricing.amount'] = { $lte: Number(maxPrice) };
     }
 
-    const total = await WorkerProfile.countDocuments(filter);
-    const workers = await WorkerProfile.find(filter)
+    const total = await CurrentModel.countDocuments(filter);
+    const workers = await CurrentModel.find(filter)
       .populate('user', 'name email avatar phone location')
       .sort({ averageRating: -1, totalReviews: -1, updatedAt: -1 })
       .skip(skip)

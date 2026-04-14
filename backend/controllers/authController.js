@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const WorkerProfile = require('../models/WorkerProfile');
+const { getWorkerModel } = require('../models/WorkerModels');
 const PasswordReset = require('../models/PasswordReset');
 const generateOTP = require('../utils/generateOTP');
 const sendEmail = require('../utils/sendEmail');
@@ -28,7 +29,7 @@ exports.register = async (req, res, next) => {
   console.log('Email:', req.body.email);
   console.log('Role:', req.body.role);
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, address, homeNumber, professions, experience, bio } = req.body;
     const requestedRole = role === 'worker' ? 'worker' : 'user';
 
     if (!name || !email || !password) {
@@ -44,12 +45,41 @@ exports.register = async (req, res, next) => {
       name,
       email,
       password,
-      role: requestedRole
+      role: requestedRole,
+      location: {
+        address,
+        homeNumber: requestedRole === 'user' ? homeNumber : undefined
+      }
     });
 
-    // If worker, create empty profile
+    // If worker, create profile in specific profession collection
     if (requestedRole === 'worker') {
-      await WorkerProfile.create({ user: user._id, experience: 0, bio: 'TBD', skills: [] });
+      const workerProfessions = professions || [];
+      let targetCollection = 'multi_professional';
+
+      if (workerProfessions.length === 1) {
+        targetCollection = workerProfessions[0];
+      } else if (workerProfessions.length === 0) {
+        targetCollection = 'general';
+      }
+
+      const DynamicWorkerModel = getWorkerModel(targetCollection);
+      
+      await DynamicWorkerModel.create({ 
+        user: user._id, 
+        professions: workerProfessions,
+        experience: experience || 0, 
+        bio: bio || 'Professional service provider',
+        pricing: { amount: 0, unit: 'hour' }
+      });
+      
+      // Also maintain primary WorkerProfile for general searches (optional, but good for backward compat)
+      await WorkerProfile.create({ 
+        user: user._id, 
+        experience: experience || 0, 
+        bio: bio || 'Professional service provider',
+        skills: workerProfessions 
+      });
     }
 
     // Generate & Send OTP

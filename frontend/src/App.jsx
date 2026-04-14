@@ -13,6 +13,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const ChatPage = lazy(() => import('./pages/Chat'));
 const SearchPage = lazy(() => import('./pages/Search'));
 const Profile = lazy(() => import('./pages/Profile'));
+const EditProfile = lazy(() => import('./pages/EditProfile'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const WorkerProfile = lazy(() => import('./pages/WorkerProfile'));
 
@@ -76,6 +77,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/profile/edit" 
+        element={
+          <ProtectedRoute>
+            <EditProfile />
           </ProtectedRoute>
         } 
       />

@@ -48,7 +48,8 @@ const userSchema = new mongoose.Schema({
       type: [Number],
       default: [0, 0]
     },
-    address: String
+    address: String,
+    homeNumber: String
   },
   createdAt: {
     type: Date,
