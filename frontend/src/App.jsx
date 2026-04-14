@@ -36,13 +36,34 @@ const ProtectedRoute = ({ children, role }) => {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route 
+        path="/" 
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        } 
+      />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/verify-otp" element={<VerifyOTP />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/search" element={<SearchPage />} />
-      <Route path="/workers/:workerId" element={<WorkerProfile />} />
+      <Route 
+        path="/search" 
+        element={
+          <ProtectedRoute>
+            <SearchPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/workers/:workerId" 
+        element={
+          <ProtectedRoute>
+            <WorkerProfile />
+          </ProtectedRoute>
+        } 
+      />
       
       {/* Protected Routes */}
       <Route 
