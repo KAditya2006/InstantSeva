@@ -61,19 +61,33 @@ app.use('/api/user', userRoutes);
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
 const frontendPublicPath = path.join(__dirname, '../frontend/public');
 
-// SEO Routes - Explicitly serve sitemap and robots
+// SEO Routes - Explicitly serve sitemap and robots with correct headers
 app.get('/sitemap.xml', (req, res) => {
   const sitemapPath = require('fs').existsSync(path.join(frontendDistPath, 'sitemap.xml'))
     ? path.join(frontendDistPath, 'sitemap.xml')
     : path.join(frontendPublicPath, 'sitemap.xml');
-  res.sendFile(sitemapPath);
+  
+  res.header('Content-Type', 'application/xml');
+  res.sendFile(sitemapPath, (err) => {
+    if (err) {
+      console.error('Sitemap serving error:', err);
+      res.status(404).end();
+    }
+  });
 });
 
 app.get('/robots.txt', (req, res) => {
   const robotsPath = require('fs').existsSync(path.join(frontendDistPath, 'robots.txt'))
     ? path.join(frontendDistPath, 'robots.txt')
     : path.join(frontendPublicPath, 'robots.txt');
-  res.sendFile(robotsPath);
+  
+  res.header('Content-Type', 'text/plain');
+  res.sendFile(robotsPath, (err) => {
+    if (err) {
+      console.error('Robots.txt serving error:', err);
+      res.status(404).end();
+    }
+  });
 });
 
 const hasFrontendBuild = require('fs').existsSync(path.join(frontendDistPath, 'index.html'));
