@@ -9,14 +9,16 @@ const app = express();
 
 // Middlewares
 app.use(helmet());
-const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
+const configuredOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const renderOrigin = process.env.RENDER_EXTERNAL_URL;
+const allowedOrigins = renderOrigin ? [...configuredOrigins, renderOrigin] : configuredOrigins;
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
       return callback(null, true);
     }
     return callback(new Error('Not allowed by CORS'));
@@ -54,12 +56,15 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// Serve Frontend in Production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+const hasFrontendBuild = require('fs').existsSync(path.join(frontendDistPath, 'index.html'));
+
+// Serve Frontend when a production build is available
+if (hasFrontendBuild) {
+  app.use(express.static(frontendDistPath));
 
   app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 } else {
   app.get('/', (req, res) => {
