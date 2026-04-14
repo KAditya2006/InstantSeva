@@ -4,11 +4,17 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const fs = require('fs');
 
 const app = express();
 
-// Middlewares
-app.use(helmet());
+/**
+ * 1. SECURITY & CONFIGURATION
+ */
+app.use(helmet({
+  contentSecurityPolicy: false, // Relaxed for development/SEO flexibility
+}));
+
 const configuredOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
   .split(',')
   .map((origin) => origin.trim())
@@ -25,21 +31,66 @@ app.use(cors({
   },
   credentials: true
 }));
+
 app.use(morgan('dev'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/auth', rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 100,
-  standardHeaders: true,
-  legacyHeaders: false
-}));
+/**
+ * 2. DYNAMIC SEO ROUTES (HIGHEST PRIORITY)
+ * These must be defined before static files and SPA routing.
+ */
 
-// Static files (uploads)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const SITE_URL = process.env.RENDER_EXTERNAL_URL || 'http://localhost:5000';
 
-// Import Routes
+app.get('/sitemap.xml', (req, res) => {
+  const lastMod = new Date().toISOString().split('T')[0];
+  
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${SITE_URL}/</loc>
+    <lastmod>${lastMod}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/search</loc>
+    <lastmod>${lastMod}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/login</loc>
+    <lastmod>${lastMod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/signup</loc>
+    <lastmod>${lastMod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>`;
+
+  res.header('Content-Type', 'application/xml');
+  res.send(sitemap);
+});
+
+app.get('/robots.txt', (req, res) => {
+  const robots = `User-agent: *
+Allow: /
+
+Sitemap: ${SITE_URL}/sitemap.xml`;
+
+  res.header('Content-Type', 'text/plain');
+  res.send(robots);
+});
+
+/**
+ * 3. API ROUTES
+ */
 const authRoutes = require('./routes/authRoutes');
 const workerRoutes = require('./routes/workerRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -48,6 +99,12 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const marketplaceRoutes = require('./routes/marketplaceRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const userRoutes = require('./routes/userRoutes');
+
+// Rate limiting for auth
+app.use('/api/auth', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100
+}));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/worker', workerRoutes);
@@ -58,63 +115,37 @@ app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/user', userRoutes);
 
+/**
+ * 4. STATIC FILES & SPA ROUTING (LOWEST PRIORITY)
+ */
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
-const frontendPublicPath = path.join(__dirname, '../frontend/public');
+const hasFrontendBuild = fs.existsSync(path.join(frontendDistPath, 'index.html'));
 
-// SEO Routes - Explicitly serve sitemap and robots with correct headers
-app.get('/sitemap.xml', (req, res) => {
-  const sitemapPath = require('fs').existsSync(path.join(frontendDistPath, 'sitemap.xml'))
-    ? path.join(frontendDistPath, 'sitemap.xml')
-    : path.join(frontendPublicPath, 'sitemap.xml');
-  
-  res.header('Content-Type', 'application/xml');
-  res.sendFile(sitemapPath, (err) => {
-    if (err) {
-      console.error('Sitemap serving error:', err);
-      res.status(404).end();
-    }
-  });
-});
-
-app.get('/robots.txt', (req, res) => {
-  const robotsPath = require('fs').existsSync(path.join(frontendDistPath, 'robots.txt'))
-    ? path.join(frontendDistPath, 'robots.txt')
-    : path.join(frontendPublicPath, 'robots.txt');
-  
-  res.header('Content-Type', 'text/plain');
-  res.sendFile(robotsPath, (err) => {
-    if (err) {
-      console.error('Robots.txt serving error:', err);
-      res.status(404).end();
-    }
-  });
-});
-
-const hasFrontendBuild = require('fs').existsSync(path.join(frontendDistPath, 'index.html'));
-
-// Serve Frontend when a production build is available
 if (hasFrontendBuild) {
+  // Serve static assets from the frontend build
   app.use(express.static(frontendDistPath));
 
-  app.get(/.*/, (req, res) => {
+  // Catch-all route to serve index.html for React SPA
+  app.get('*', (req, res) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 } else {
   app.get('/', (req, res) => {
-    res.send('API is running...');
+    res.send('API is running... (Frontend build not found)');
   });
 }
 
-// Error Handling Middleware
+/**
+ * 5. ERROR HANDLING
+ */
 app.use((err, req, res, next) => {
   console.error('API Error:', err);
-  
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Something went wrong on our end';
-  
-  res.status(statusCode).json({
+  const status = err.statusCode || 500;
+  res.status(status).json({
     success: false,
-    message: message,
+    message: err.message || 'Something went wrong on our end',
     stack: process.env.NODE_ENV === 'development' ? err.stack : null
   });
 });
