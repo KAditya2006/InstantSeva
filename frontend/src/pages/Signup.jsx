@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../services/api';
-import { User, Mail, Lock, Briefcase, ArrowRight, Home, Clock } from 'lucide-react';
+import { User, Mail, Lock, Phone, Briefcase, ArrowRight, Home, Clock, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 import toast from 'react-hot-toast';
 import BrandLogo from '../components/BrandLogo';
@@ -12,13 +12,19 @@ const Signup = () => {
     name: '', 
     email: '', 
     password: '', 
+    phone: '',
     role: 'user',
     address: '',
+    city: '',
+    area: '',
+    landmark: '',
+    pincode: '',
     homeNumber: '',
     professions: [],
     experience: '',
     bio: ''
   });
+  const [showManualLocation, setShowManualLocation] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -130,17 +136,65 @@ const Signup = () => {
                   className="w-full bg-white border border-slate-200 pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-primary-500 transition-colors font-medium"
                 />
               </div>
-
               <div className="relative">
-                <AddressAutocomplete 
-                  value={formData.address}
-                  onChange={({ address, coordinates }) => setFormData({
-                    ...formData, 
-                    address,
-                    location: { ...formData.location, coordinates: coordinates || [0,0] }
-                  })}
-                  placeholder="Street Address / Location"
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input 
+                  type="tel" 
+                  placeholder="Phone Number (Required for bookings)" 
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  className="w-full bg-white border border-slate-200 pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-primary-500 transition-colors font-medium"
                 />
+              </div>
+
+              <div className="space-y-3">
+                <div className="relative">
+                  <AddressAutocomplete 
+                    value={formData.address}
+                    onChange={({ address, coordinates }) => setFormData({
+                      ...formData, 
+                      address,
+                      location: { ...formData.location, coordinates: coordinates || [0,0] }
+                    })}
+                    placeholder="Search your location..."
+                  />
+                </div>
+
+                <button 
+                  type="button"
+                  onClick={() => setShowManualLocation(!showManualLocation)}
+                  className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-primary-600 transition-colors ml-1"
+                >
+                  {showManualLocation ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  {showManualLocation ? "Hide manual entry" : "Enter location manually"}
+                </button>
+
+                {showManualLocation && (
+                  <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="relative col-span-2">
+                       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                       <input 
+                         placeholder="Area / Neighborhood" 
+                         value={formData.area}
+                         onChange={(e) => setFormData({...formData, area: e.target.value})}
+                         className="w-full bg-white border border-slate-200 pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none focus:border-primary-500 transition-colors"
+                       />
+                    </div>
+                    <input 
+                      placeholder="City" 
+                      value={formData.city}
+                      onChange={(e) => setFormData({...formData, city: e.target.value})}
+                      className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:border-primary-500 transition-colors"
+                    />
+                    <input 
+                      placeholder="Pincode" 
+                      value={formData.pincode}
+                      onChange={(e) => setFormData({...formData, pincode: e.target.value})}
+                      className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:border-primary-500 transition-colors"
+                    />
+                  </div>
+                )}
               </div>
 
               {formData.role === 'user' && (

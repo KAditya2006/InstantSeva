@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { createReview, getBookings, updateBookingPayment, updateBookingStatus, verifyStartOTP } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { CalendarDays, CheckCircle2, Clock, XCircle, Key, ShieldCheck, MapPin } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock, XCircle, Key, ShieldCheck, MapPin, Phone } from 'lucide-react';
 import TrackingMap from '../components/TrackingMap';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -86,7 +86,16 @@ const Profile = () => {
               <p className="text-slate-500">{user?.email}</p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <span className="bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-xs font-bold uppercase">{user?.role}</span>
-                {user?.phone && <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold">{user.phone}</span>}
+                {user?.phone && (
+                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                    <Phone size={12} /> {user.phone}
+                  </span>
+                )}
+                {user?.location?.city && (
+                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                    <MapPin size={12} /> {user.location.city} {user.location.pincode && `(${user.location.pincode})`}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -147,6 +156,12 @@ const Profile = () => {
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${statusStyles[booking.status] || statusStyles.pending}`}>{booking.status}</span>
                   </div>
                   <p className="text-slate-500 break-words">With {otherPerson?.name} at {booking.address}</p>
+                  {otherPerson?.phone && (
+                    <div className="flex items-center gap-2 text-primary-600 font-bold text-sm bg-primary-50/50 w-fit px-3 py-1.5 rounded-lg border border-primary-100 mt-1">
+                      <Phone size={14} />
+                      <span>Contact: {otherPerson.phone}</span>
+                    </div>
+                  )}
                   <p className="flex items-start gap-2 text-sm font-bold text-slate-500">
                     <Clock size={16} className="mt-0.5 shrink-0" /> <span>{format(new Date(booking.scheduledDate), 'PPp')}</span>
                   </p>

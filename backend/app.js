@@ -80,17 +80,6 @@ app.get('/sitemap.xml', (req, res) => {
   res.status(200).send(sitemap.trim());
 });
 
-app.get('/robots.txt', (req, res) => {
-  const siteUrl = process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.get('host')}`;
-  const robots = `User-agent: *
-Allow: /
-
-Sitemap: ${siteUrl}/sitemap.xml`;
-
-  res.set('Content-Type', 'text/plain');
-  res.status(200).send(robots);
-});
-
 /**
  * 3. API ROUTES
  */
@@ -131,7 +120,7 @@ if (hasFrontendBuild) {
   app.use(express.static(frontendDistPath));
 
   // Catch-all route to serve index.html for React SPA (Express 5 compatible regex)
-  app.get(/^(?!\/api|\/sitemap\.xml|\/robots\.txt).+/, (req, res) => {
+  app.get(/^(?!\/api|\/sitemap\.xml).+/, (req, res) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 } else {

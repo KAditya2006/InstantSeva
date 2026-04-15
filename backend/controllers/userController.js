@@ -2,7 +2,7 @@ const User = require('../models/User');
 
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name, phone, address, homeNumber, avatar } = req.body;
+    const { name, phone, address, homeNumber, city, area, landmark, pincode, avatar } = req.body;
     const userId = req.user._id;
 
     const user = await User.findById(userId);
@@ -16,10 +16,14 @@ exports.updateProfile = async (req, res, next) => {
     if (avatar) user.avatar = avatar;
 
     // Update location details
-    if (address || homeNumber) {
+    if (address || homeNumber || city || area || landmark || pincode) {
       user.location = {
         ...user.location,
         address: address || user.location.address,
+        city: city || user.location.city,
+        area: area || user.location.area,
+        landmark: landmark || user.location.landmark,
+        pincode: pincode || user.location.pincode,
         homeNumber: user.role === 'user' ? (homeNumber || user.location.homeNumber) : undefined
       };
     }

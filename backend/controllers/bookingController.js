@@ -9,20 +9,33 @@ const { generateOTP, sendOTPEmail } = require('../services/otpService');
 
 const populateBooking = (query) => {
   return query
-    .populate('user', 'name email avatar phone')
-    .populate('worker', 'name email avatar phone');
+    .populate('user', 'name email avatar')
+    .populate('worker', 'name email avatar');
 };
 
-const attachReviews = async (bookings) => {
+const attachContactDetails = async (bookings, userId) => {
   const plainBookings = bookings.map((booking) => booking.toObject ? booking.toObject() : booking);
+  
+  // Find reviews for these bookings
   const bookingIds = plainBookings.map((booking) => booking._id);
   const reviews = await Review.find({ booking: { $in: bookingIds } }).select('booking rating comment createdAt');
   const reviewsByBooking = new Map(reviews.map((review) => [review.booking.toString(), review]));
 
-  return plainBookings.map((booking) => ({
-    ...booking,
-    review: reviewsByBooking.get(booking._id.toString()) || null
-  }));
+  // Fetch phone numbers only for accepted/in_progress bookings
+  for (let booking of plainBookings) {
+    booking.review = reviewsByBooking.get(booking._id.toString()) || null;
+
+    if (['accepted', 'in_progress'].includes(booking.status)) {
+      // Fetch full user/worker objects to get phone numbers
+      const fullUser = await User.findById(booking.user._id).select('phone');
+      const fullWorker = await User.findById(booking.worker._id).select('phone');
+      
+      if (booking.user) booking.user.phone = fullUser?.phone;
+      if (booking.worker) booking.worker.phone = fullWorker?.phone;
+    }
+  }
+
+  return plainBookings;
 };
 
 exports.createBooking = async (req, res) => {
@@ -80,7 +93,8 @@ exports.createBooking = async (req, res) => {
     });
 
     const populatedBooking = await populateBooking(Booking.findById(booking._id));
-    res.status(201).json({ success: true, data: populatedBooking });
+    const finalData = await attachContactDetails([populatedBooking], req.user.id);
+    res.status(201).json({ success: true, data: finalData[0] });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -102,11 +116,11 @@ exports.getBookings = async (req, res) => {
         .limit(limit)
     );
 
-    const bookingsWithReviews = await attachReviews(bookings);
+    const bookingsWithDetails = await attachContactDetails(bookings, req.user.id);
 
     res.status(200).json({
       success: true,
-      data: bookingsWithReviews,
+      data: bookingsWithDetails,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) || 1 }
     });
   } catch (error) {
@@ -191,7 +205,8 @@ exports.updateBookingStatus = async (req, res) => {
     }
 
     const populatedBooking = await populateBooking(Booking.findById(booking._id));
-    res.status(200).json({ success: true, data: populatedBooking });
+    const finalData = await attachContactDetails([populatedBooking], req.user.id);
+    res.status(200).json({ success: true, data: finalData[0] });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -241,7 +256,8 @@ exports.updatePaymentStatus = async (req, res) => {
     });
 
     const populatedBooking = await populateBooking(Booking.findById(booking._id));
-    res.status(200).json({ success: true, data: populatedBooking });
+    const finalData = await attachContactDetails([populatedBooking], req.user.id);
+    res.status(200).json({ success: true, data: finalData[0] });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

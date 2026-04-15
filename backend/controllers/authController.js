@@ -21,6 +21,8 @@ const serializeUser = (user) => ({
   email: user.email,
   role: user.role,
   avatar: user.avatar,
+  phone: user.phone,
+  location: user.location,
   isVerified: user.isVerified
 });
 
@@ -29,11 +31,11 @@ exports.register = async (req, res, next) => {
   console.log('Email:', req.body.email);
   console.log('Role:', req.body.role);
   try {
-    const { name, email, password, role, address, homeNumber, professions, experience, bio } = req.body;
+    const { name, email, password, role, address, homeNumber, phone, city, area, landmark, pincode, professions, experience, bio } = req.body;
     const requestedRole = role === 'worker' ? 'worker' : 'user';
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+    if (!name || !email || !password || !phone) {
+      return res.status(400).json({ success: false, message: 'Name, email, password, and phone number are required' });
     }
 
     const userExists = await User.findOne({ email });
@@ -46,8 +48,13 @@ exports.register = async (req, res, next) => {
       email,
       password,
       role: requestedRole,
+      phone,
       location: {
         address,
+        city,
+        area,
+        landmark,
+        pincode,
         homeNumber: requestedRole === 'user' ? homeNumber : undefined
       }
     });
