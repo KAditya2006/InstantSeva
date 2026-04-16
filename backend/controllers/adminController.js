@@ -7,7 +7,12 @@ exports.getDashboardStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments({ role: 'user' });
     const totalWorkers = await User.countDocuments({ role: 'worker' });
-    const pendingApprovals = await WorkerProfile.countDocuments({ approvalStatus: 'pending' });
+    
+    // Total pending from both WorkerProfile and User KYC
+    const workerPending = await WorkerProfile.countDocuments({ approvalStatus: 'pending' });
+    const userPending = await User.countDocuments({ 'kyc.status': 'pending', role: 'user' });
+    const pendingApprovals = workerPending + userPending;
+
     const totalBookings = await Booking.countDocuments();
     const paidBookings = await Booking.countDocuments({ paymentStatus: 'paid' });
 
@@ -22,9 +27,34 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getPendingWorkers = async (req, res) => {
   try {
-    const pendingWorkers = await WorkerProfile.find({ approvalStatus: 'pending' })
-      .populate('user', 'name email phone avatar location');
-    res.status(200).json({ success: true, data: pendingWorkers });
+    // 1. Get Pending Workers
+    const workers = await WorkerProfile.find({ approvalStatus: 'pending' })
+      .populate('user', 'name email phone avatar location')
+      .lean();
+    
+    const formattedWorkers = workers.map(w => ({
+      ...w,
+      type: 'worker',
+      kyc: w.kyc || {},
+      createdAt: w.createdAt
+    }));
+
+    // 2. Get Pending User KYC
+    const users = await User.find({ 'kyc.status': 'pending', role: 'user' }).lean();
+    const formattedUsers = users.map(u => ({
+      _id: u._id,
+      user: u,
+      kyc: u.kyc,
+      type: 'user',
+      createdAt: u.createdAt
+    }));
+
+    // 3. Combine and Sort by Date
+    const combined = [...formattedWorkers, ...formattedUsers].sort((a, b) => 
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.status(200).json({ success: true, data: combined });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -32,35 +62,49 @@ exports.getPendingWorkers = async (req, res) => {
 
 exports.approveWorker = async (req, res) => {
   try {
-    const { workerId, status, rejectionReason } = req.body;
+    const { workerId, status, rejectionReason, type } = req.body;
 
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
-    const profile = await WorkerProfile.findByIdAndUpdate(
-      workerId,
-      {
-        approvalStatus: status,
-        'kyc.status': status === 'approved' ? 'verified' : 'rejected',
-        'kyc.rejectionReason': rejectionReason || ''
-      },
-      { new: true }
-    );
+    let result;
+    if (type === 'worker') {
+      result = await WorkerProfile.findByIdAndUpdate(
+        workerId,
+        {
+          approvalStatus: status,
+          'kyc.status': status === 'approved' ? 'verified' : 'rejected',
+          'kyc.rejectionReason': rejectionReason || ''
+        },
+        { new: true }
+      );
+    } else {
+      // Re-use logic for User model
+      result = await User.findByIdAndUpdate(
+        workerId,
+        {
+          'kyc.status': status === 'approved' ? 'verified' : 'rejected',
+          'kyc.rejectionReason': rejectionReason || '',
+          isAdminApproved: status === 'approved'
+        },
+        { new: true }
+      );
+    }
 
-    if (!profile) {
-       return res.status(404).json({ success: false, message: 'Worker profile not found' });
+    if (!result) {
+       return res.status(404).json({ success: false, message: 'Identity record not found' });
     }
 
     await AuditLog.create({
       actor: req.user.id,
-      action: `worker.${status}`,
-      entityType: 'WorkerProfile',
-      entityId: profile._id,
+      action: `${type}.${status}`,
+      entityType: type === 'worker' ? 'WorkerProfile' : 'User',
+      entityId: result._id,
       details: { rejectionReason: rejectionReason || '' }
     });
 
-    res.status(200).json({ success: true, message: `Worker ${status} successfully`, data: profile });
+    res.status(200).json({ success: true, message: `Identity ${status} successfully`, data: result });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

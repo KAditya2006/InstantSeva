@@ -42,7 +42,12 @@ const AdminDashboard = () => {
     }
 
     try {
-      const { data } = await approveWorker({ workerId, status, rejectionReason });
+      const { data } = await approveWorker({ 
+        workerId, 
+        status, 
+        rejectionReason,
+        type: selectedWorker?.type || pendingWorkers.find(w => w._id === workerId)?.type
+      });
       toast.success(data.message);
       setSelectedWorker(null);
       setRejectionReason('');
@@ -97,32 +102,38 @@ const AdminDashboard = () => {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 text-slate-400 text-[11px] uppercase tracking-[0.2em] font-bold">
-                  <th className="px-8 py-5">Worker Details</th>
+                  <th className="px-8 py-5">Applicant Details</th>
+                  <th className="px-8 py-5">Type</th>
                   <th className="px-8 py-5">Applied Date</th>
                   <th className="px-8 py-5">Documents</th>
                   <th className="px-8 py-5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredWorkers.length > 0 ? filteredWorkers.map((worker) => (
-                  <tr key={worker._id} className="hover:bg-slate-50/30 transition-colors">
+                {filteredWorkers.length > 0 ? filteredWorkers.map((item) => (
+                  <tr key={item._id} className="hover:bg-slate-50/30 transition-colors">
                     <td className="px-8 py-6">
                        <div className="flex items-center gap-4">
-                          <img src={worker.user?.avatar} alt="" className="w-12 h-12 rounded-2xl object-cover border border-slate-100" />
+                          <img src={item.user?.avatar} alt="" className="w-12 h-12 rounded-2xl object-cover border border-slate-100" />
                           <div>
-                             <p className="font-bold text-slate-900">{worker.user?.name}</p>
-                             <p className="text-xs font-semibold text-slate-400">{worker.user?.email}</p>
+                             <p className="font-bold text-slate-900">{item.user?.name}</p>
+                             <p className="text-xs font-semibold text-slate-400">{item.user?.email}</p>
                           </div>
                        </div>
                     </td>
                     <td className="px-8 py-6">
+                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${item.type === 'worker' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                          {item.type}
+                       </span>
+                    </td>
+                    <td className="px-8 py-6">
                        <div className="flex items-center gap-2 text-slate-600 font-bold text-sm">
-                          <Clock size={16} /> {new Date(worker.createdAt).toLocaleDateString()}
+                          <Clock size={16} /> {new Date(item.createdAt).toLocaleDateString()}
                        </div>
                     </td>
                     <td className="px-8 py-6">
                        <button 
-                        onClick={() => setSelectedWorker(worker)}
+                        onClick={() => setSelectedWorker(item)}
                         className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
                        >
                          <Eye size={14} /> Review KYC
@@ -131,14 +142,14 @@ const AdminDashboard = () => {
                     <td className="px-8 py-6 text-right">
                        <div className="flex justify-end gap-2">
                           <button 
-                            onClick={() => handleApproval(worker._id, 'approved')}
+                            onClick={() => handleApproval(item._id, 'approved')}
                             className="p-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-xl transition-all"
                             title="Approve"
                           >
                              <CheckCircle size={20} />
                           </button>
                           <button 
-                            onClick={() => setSelectedWorker(worker)}
+                            onClick={() => setSelectedWorker(item)}
                             className="p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all"
                             title="Reject"
                           >
@@ -149,7 +160,7 @@ const AdminDashboard = () => {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="4" className="px-8 py-20 text-center">
+                    <td colSpan="5" className="px-8 py-20 text-center">
                        <div className="max-w-xs mx-auto space-y-2">
                           <p className="font-bold text-slate-300 text-lg italic">The verification queue is clear.</p>
                           <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Good job! Check back later.</p>
@@ -186,30 +197,37 @@ const AdminDashboard = () => {
 
         {/* KYC Review Modal */}
         {selectedWorker && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
              <div className="bg-white w-full max-w-5xl rounded-3xl md:rounded-[40px] premium-shadow overflow-hidden flex flex-col max-h-[92vh]">
                 <div className="p-4 sm:p-8 border-b border-slate-50 flex justify-between items-center gap-4">
-                   <h3 className="text-lg sm:text-2xl font-bold font-heading text-slate-900">Review Application: {selectedWorker.user?.name}</h3>
+                   <div>
+                    <h3 className="text-lg sm:text-2xl font-bold font-heading text-slate-900">Review Identity: {selectedWorker.user?.name}</h3>
+                    <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-500 text-[10px] uppercase font-black">{selectedWorker.type} Account</span>
+                   </div>
                    <button onClick={() => setSelectedWorker(null)} className="p-2 hover:bg-slate-50 rounded-xl transition-colors"><XCircle className="text-slate-400" size={24} /></button>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto p-4 sm:p-10 grid md:grid-cols-2 gap-6 sm:gap-10">
                    <div className="space-y-4">
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Uploaded ID Proof</p>
-                      <div className="aspect-[4/3] rounded-3xl overflow-hidden border-4 border-slate-50 bg-slate-100 flex items-center justify-center">
+                      <div className="aspect-4/3 rounded-3xl overflow-hidden border-4 border-slate-50 bg-slate-100 flex items-center justify-center">
                          {selectedWorker.kyc?.idProof?.url ? (
                            <img src={selectedWorker.kyc.idProof.url} className="w-full h-full object-contain" alt="ID Proof" />
                          ) : <span className="text-slate-300 font-bold italic">No document uploaded</span>}
                       </div>
                    </div>
-                   <div className="space-y-4">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Uploaded Selfie</p>
-                      <div className="aspect-[4/3] rounded-3xl overflow-hidden border-4 border-slate-50 bg-slate-100 flex items-center justify-center">
-                         {selectedWorker.kyc?.selfie?.url ? (
-                           <img src={selectedWorker.kyc.selfie.url} className="w-full h-full object-contain" alt="Selfie" />
-                         ) : <span className="text-slate-300 font-bold italic">No document uploaded</span>}
-                      </div>
-                   </div>
+                   
+                   {selectedWorker.type === 'worker' && (
+                     <div className="space-y-4">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Uploaded Selfie</p>
+                        <div className="aspect-4/3 rounded-3xl overflow-hidden border-4 border-slate-50 bg-slate-100 flex items-center justify-center">
+                           {selectedWorker.kyc?.selfie?.url ? (
+                             <img src={selectedWorker.kyc.selfie.url} className="w-full h-full object-contain" alt="Selfie" />
+                           ) : <span className="text-slate-300 font-bold italic">No document uploaded</span>}
+                        </div>
+                     </div>
+                   )}
+                   
                    <div className="md:col-span-2 space-y-4 pt-6 border-t border-slate-50">
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Rejection Reason (If applicable)</p>
                       <textarea 
@@ -226,13 +244,13 @@ const AdminDashboard = () => {
                     onClick={() => handleApproval(selectedWorker._id, 'approved')}
                     className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold transition-all premium-shadow"
                    >
-                     Approve Worker Identity
+                     Approve Identity
                    </button>
                    <button 
                     onClick={() => handleApproval(selectedWorker._id, 'rejected')}
                     className="flex-1 py-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold transition-all premium-shadow"
                    >
-                     Reject Application
+                     Reject Identity
                    </button>
                 </div>
              </div>
