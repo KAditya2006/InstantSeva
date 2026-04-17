@@ -1,37 +1,13 @@
 const WorkerProfile = require('../models/WorkerProfile');
 const User = require('../models/User');
-const { getWorkerModel } = require('../models/WorkerModels');
+const { syncDynamicWorkerProfile } = require('../utils/syncWorkerProfile');
 
 const VALID_AVAILABILITY_STATUSES = ['Available', 'Busy', 'Offline', 'Pending Verification'];
-
-const getWorkerCollectionName = (skills = []) => {
-  if (!Array.isArray(skills) || skills.length === 0) return 'general';
-  return skills.length === 1 ? skills[0] : 'multi_professional';
-};
 
 const getAvailabilityStatus = ({ availability, availabilityStatus }) => {
   if (VALID_AVAILABILITY_STATUSES.includes(availabilityStatus)) return availabilityStatus;
   if (typeof availability === 'boolean') return availability ? 'Available' : 'Offline';
   return undefined;
-};
-
-const syncDynamicWorkerProfile = async (profile) => {
-  const DynamicWorkerModel = getWorkerModel(getWorkerCollectionName(profile.skills));
-
-  await DynamicWorkerModel.findOneAndUpdate(
-    { user: profile.user },
-    {
-      user: profile.user,
-      professions: profile.skills,
-      experience: profile.experience,
-      bio: profile.bio,
-      pricing: profile.pricing,
-      availability: profile.availabilityStatus !== 'Offline',
-      availabilityStatus: profile.availabilityStatus,
-      approvalStatus: profile.approvalStatus
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
 };
 
 exports.getWorkerProfile = async (req, res, next) => {

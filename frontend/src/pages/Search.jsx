@@ -161,6 +161,12 @@ const SearchPage = () => {
       return;
     }
 
+    const availabilityStatus = getWorkerAvailabilityStatus(worker);
+    if (availabilityStatus !== 'Available') {
+      toast.error(`Worker is currently ${availabilityStatus.toLowerCase()}`);
+      return;
+    }
+
     const workerSkills = getWorkerSkills(worker);
     setSelectedWorker(worker);
     setBooking((current) => ({
@@ -255,6 +261,7 @@ const SearchPage = () => {
             const workerSkills = getWorkerSkills(worker);
             const distanceLabel = formatDistance(worker.distanceKm);
             const availabilityStatus = getWorkerAvailabilityStatus(worker);
+            const isAvailable = availabilityStatus === 'Available';
 
             return (
             <article key={worker._id} className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 premium-shadow flex flex-col gap-5">
@@ -296,8 +303,12 @@ const SearchPage = () => {
                 <button onClick={() => handleChat(worker)} className="border border-slate-200 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50">
                   <MessageSquare size={18} /> Chat
                 </button>
-                <button onClick={() => openBooking(worker)} className="bg-slate-900 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800">
-                  <CalendarDays size={18} /> Book
+                <button
+                  onClick={() => openBooking(worker)}
+                  disabled={!isAvailable}
+                  className="bg-slate-900 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed"
+                >
+                  <CalendarDays size={18} /> {isAvailable ? 'Book' : 'Unavailable'}
                 </button>
               </div>
             </article>

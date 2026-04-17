@@ -26,6 +26,7 @@ import {
   Zap
 } from 'lucide-react';
 import TrackingMap from '../components/TrackingMap';
+import BookingDetailsModal from '../components/BookingDetailsModal';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { formatInr } from '../utils/formatters';
@@ -98,6 +99,7 @@ const Dashboard = () => {
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [otpInput, setOtpInput] = useState({});
   const [serviceQuery, setServiceQuery] = useState('');
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   const openServiceSearch = (service) => {
     navigate(`/search?q=${encodeURIComponent(service)}`);
@@ -237,7 +239,11 @@ const Dashboard = () => {
           ) : bookings.map((booking) => {
             const otherPerson = user?.role === 'worker' ? booking.user : booking.worker;
             return (
-              <article key={booking._id} className="bg-white rounded-3xl border border-slate-100 premium-shadow p-4 sm:p-6 flex flex-col lg:flex-row gap-5 lg:items-center justify-between">
+              <article
+                key={booking._id}
+                onClick={() => setSelectedBooking(booking)}
+                className="bg-white rounded-3xl border border-slate-100 premium-shadow p-4 sm:p-6 flex flex-col lg:flex-row gap-5 lg:items-center justify-between cursor-pointer hover:-translate-y-0.5 transition-all"
+              >
                 <div className="space-y-2 min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
                     <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words">{booking.service}</h3>
@@ -259,7 +265,7 @@ const Dashboard = () => {
                   {booking.additionalNotes && <p className="text-slate-600">{booking.additionalNotes}</p>}
 
                   {(booking.status === 'accepted' || booking.status === 'in_progress') && user?.location?.coordinates && (
-                    <div className="mt-4">
+                    <div className="mt-4" onClick={(event) => event.stopPropagation()}>
                       <div className="flex items-center gap-2 mb-2 text-sm font-bold text-slate-900">
                         <MapPin size={16} className="text-primary-600" />
                         <span>Live Worker Tracking</span>
@@ -272,7 +278,7 @@ const Dashboard = () => {
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-3 lg:justify-end">
+                <div className="flex flex-wrap gap-3 lg:justify-end" onClick={(event) => event.stopPropagation()}>
                   {booking.status === 'accepted' && (
                     <div className="flex flex-col sm:flex-row gap-2">
                       <div className="relative">
@@ -304,7 +310,7 @@ const Dashboard = () => {
                 </div>
 
                 {booking.status === 'completed' && !booking.review && (
-                  <div className="lg:basis-full grid sm:grid-cols-[140px_1fr_auto] gap-3 pt-4 border-t border-slate-100">
+                  <div className="lg:basis-full grid sm:grid-cols-[140px_1fr_auto] gap-3 pt-4 border-t border-slate-100" onClick={(event) => event.stopPropagation()}>
                     <select value={reviewForms[booking._id]?.rating || 5} onChange={(e) => setReviewForms({ ...reviewForms, [booking._id]: { ...reviewForms[booking._id], rating: Number(e.target.value) } })} className="bg-slate-50 rounded-xl px-3 py-2 outline-none">
                       {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}
                     </select>
@@ -330,6 +336,11 @@ const Dashboard = () => {
           )}
         </section>
       </main>
+      <BookingDetailsModal
+        booking={selectedBooking}
+        viewerRole="user"
+        onClose={() => setSelectedBooking(null)}
+      />
     </div>
   );
 };

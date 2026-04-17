@@ -46,6 +46,7 @@ const WorkerProfile = () => {
     e.preventDefault();
     if (!token) return navigate('/login');
     if (user?.role !== 'user') return toast.error('Only customers can book workers');
+    if (!isAvailable) return toast.error(`Worker is currently ${availabilityStatus.toLowerCase()}`);
 
     try {
       await createBooking({
@@ -67,6 +68,7 @@ const WorkerProfile = () => {
   }
 
   const availabilityStatus = getWorkerAvailabilityStatus(worker);
+  const isAvailable = availabilityStatus === 'Available';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -115,8 +117,11 @@ const WorkerProfile = () => {
             <input required value={booking.scheduledDate} onChange={(e) => setBooking({ ...booking, scheduledDate: e.target.value })} type="datetime-local" className="w-full bg-slate-50 rounded-2xl px-4 py-3 outline-none" />
             <input required value={booking.address} onChange={(e) => setBooking({ ...booking, address: e.target.value })} placeholder="Service address" className="w-full bg-slate-50 rounded-2xl px-4 py-3 outline-none" />
             <textarea value={booking.additionalNotes} onChange={(e) => setBooking({ ...booking, additionalNotes: e.target.value })} placeholder="Notes" className="w-full h-24 bg-slate-50 rounded-2xl px-4 py-3 outline-none" />
-            <button className="w-full bg-primary-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2">
-              <CalendarDays size={18} /> Send Request
+            <button
+              disabled={!isAvailable}
+              className="w-full bg-primary-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed"
+            >
+              <CalendarDays size={18} /> {isAvailable ? 'Send Request' : 'Worker Unavailable'}
             </button>
           </form>
         </aside>

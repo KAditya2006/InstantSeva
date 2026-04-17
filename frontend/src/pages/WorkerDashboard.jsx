@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getBookings, getWorkerProfile, updateBookingStatus, updateWorkerProfile, uploadKYC, verifyCompletionOTP } from '../services/api';
 import Navbar from '../components/Navbar';
+import BookingDetailsModal from '../components/BookingDetailsModal';
 import { LayoutDashboard, FileCheck, DollarSign, Briefcase, Star, Clock, AlertCircle, CheckCircle2, Upload, User as UserIcon, XCircle, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -20,6 +21,7 @@ const WorkerDashboard = () => {
   const [otpInput, setOtpInput] = useState({});
   const [savingProfile, setSavingProfile] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   useEffect(() => {
     fetchProfile();
@@ -334,7 +336,11 @@ const WorkerDashboard = () => {
               {bookings.length === 0 ? (
                 <p className="text-slate-400 font-bold italic">No assigned jobs yet.</p>
               ) : bookings.map((booking) => (
-                <div key={booking._id} className="border border-slate-100 rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:items-center justify-between">
+                <div
+                  key={booking._id}
+                  onClick={() => setSelectedBooking(booking)}
+                  className="border border-slate-100 rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+                >
                   <div>
                     <p className="font-bold text-slate-900">{booking.service}</p>
                     <p className="text-sm text-slate-500">{booking.user?.name} - {format(new Date(booking.scheduledDate), 'PPp')}</p>
@@ -342,7 +348,7 @@ const WorkerDashboard = () => {
                     <p className="text-sm font-bold text-slate-500">{formatInr(booking.totalPrice)} - Payment {booking.paymentStatus}</p>
                     <span className="inline-block mt-2 bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold uppercase">{booking.status}</span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
                     {booking.status === 'pending' && (
                       <>
                         <button onClick={() => handleJobStatus(booking._id, 'accepted')} className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold">Accept</button>
@@ -386,6 +392,11 @@ const WorkerDashboard = () => {
           </section>}
         </main>
       </div>
+      <BookingDetailsModal
+        booking={selectedBooking}
+        viewerRole="worker"
+        onClose={() => setSelectedBooking(null)}
+      />
     </div>
   );
 };

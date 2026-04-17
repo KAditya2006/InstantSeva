@@ -7,11 +7,12 @@ const { calculateBookingPrice, canTransitionBooking, canUpdatePaymentStatus, get
 const createNotification = require('../utils/createNotification');
 const { generateOTP, sendOTPEmail } = require('../services/otpService');
 const asyncHandler = require('../utils/asyncHandler');
+const { syncDynamicWorkerProfile } = require('../utils/syncWorkerProfile');
 
 const populateBooking = (query) => {
   return query
-    .populate('user', 'name email avatar')
-    .populate('worker', 'name email avatar');
+    .populate('user', 'name email avatar phone')
+    .populate('worker', 'name email avatar phone');
 };
 
 const getId = (value) => {
@@ -75,7 +76,10 @@ exports.createBooking = asyncHandler(async (req, res) => {
   const profile = await WorkerProfile.findOne({
     user: workerId,
     approvalStatus: 'approved',
-    availability: true
+    $or: [
+      { availabilityStatus: 'Available' },
+      { availabilityStatus: { $exists: false } }
+    ]
   });
 
   if (!profile) {
@@ -206,10 +210,12 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
   }
 
   if (status === 'completed' || status === 'cancelled' || status === 'rejected') {
-    await WorkerProfile.findOneAndUpdate(
+    const profile = await WorkerProfile.findOneAndUpdate(
       { user: booking.worker },
-      { availabilityStatus: 'Available' }
+      { availabilityStatus: 'Available' },
+      { new: true }
     );
+    await syncDynamicWorkerProfile(profile);
   }
 
   const populatedBooking = await populateBooking(Booking.findById(booking._id));
@@ -346,10 +352,12 @@ exports.verifyStartOTP = asyncHandler(async (req, res) => {
   booking.startOTPVerified = true;
   await booking.save();
 
-  await WorkerProfile.findOneAndUpdate(
+  const profile = await WorkerProfile.findOneAndUpdate(
     { user: booking.worker },
-    { availabilityStatus: 'Busy' }
+    { availabilityStatus: 'Busy' },
+    { new: true }
   );
+  await syncDynamicWorkerProfile(profile);
 
   await createNotification({
     user: booking.worker,
@@ -386,10 +394,12 @@ exports.verifyCompletionOTP = asyncHandler(async (req, res) => {
   booking.completionOTPVerified = true;
   await booking.save();
 
-  await WorkerProfile.findOneAndUpdate(
+  const profile = await WorkerProfile.findOneAndUpdate(
     { user: booking.worker },
-    { availabilityStatus: 'Available' }
+    { availabilityStatus: 'Available' },
+    { new: true }
   );
+  await syncDynamicWorkerProfile(profile);
 
   await createNotification({
     user: booking.user,
