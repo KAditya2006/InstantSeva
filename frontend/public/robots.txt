@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Allow: /search
+Allow: /login
+Allow: /signup
+Allow: /forgot-password
+Allow: /verify-otp
+Allow: /dashboard
+Allow: /worker/dashboard
+Allow: /admin/dashboard
+Allow: /profile
+Allow: /messages
+Allow: /workers/
+
+Sitemap: https://instantseva.onrender.com/sitemap.xml

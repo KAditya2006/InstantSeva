@@ -42,83 +42,8 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 /**
- * 2. SEO & DISCOVERY (DYNAMIC)
+ * 2. API HEALTH
  */
-const WorkerProfile = require('./models/WorkerProfile');
-
-app.get('/robots.txt', (req, res) => {
-  const siteUrl = process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.get('host')}`;
-  res.set('Content-Type', 'text/plain');
-  res.send(`User-agent: *
-Allow: /
-Allow: /search
-Allow: /workers/
-Disallow: /dashboard/
-Disallow: /worker/dashboard/
-Disallow: /admin/dashboard/
-Disallow: /profile/
-Disallow: /messages/
-
-Sitemap: ${siteUrl}/sitemap.xml`);
-});
-
-app.get('/sitemap.xml', async (req, res) => {
-  try {
-    const siteUrl = process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.get('host')}`;
-    const lastMod = new Date().toISOString().split('T')[0];
-    
-    // Fetch all approved workers to include in sitemap
-    const workers = await WorkerProfile.find({ approvalStatus: 'approved' }).select('user');
-
-    let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>${siteUrl}/</loc>
-    <lastmod>${lastMod}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>${siteUrl}/search</loc>
-    <lastmod>${lastMod}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>`;
-
-    // Add each worker profile to the sitemap
-    workers.forEach(w => {
-      sitemap += `
-  <url>
-    <loc>${siteUrl}/workers/${w.user}</loc>
-    <lastmod>${lastMod}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>`;
-    });
-
-    sitemap += `
-  <url>
-    <loc>${siteUrl}/login</loc>
-    <lastmod>${lastMod}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>${siteUrl}/signup</loc>
-    <lastmod>${lastMod}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-</urlset>`;
-
-    res.set('Content-Type', 'application/xml; charset=utf-8');
-    res.status(200).send(sitemap.trim());
-  } catch (error) {
-    console.error('Sitemap Error:', error);
-    res.status(500).end();
-  }
-});
-
 app.get('/api/health', (req, res) => {
   const dbState = mongoose.connection.readyState;
   const missingOptional = Object.fromEntries(
