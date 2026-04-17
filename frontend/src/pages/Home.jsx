@@ -120,6 +120,7 @@ const Home = () => {
             <Motion.div
               key={i}
               whileHover={{ y: -5 }}
+              onClick={() => navigate(`/search?q=${encodeURIComponent(cat.slug)}`)}
               className={`${cat.color} p-5 sm:p-8 rounded-3xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all border border-transparent hover:border-white hover:premium-shadow group min-h-32`}
             >
               <div className="p-4 bg-white rounded-2xl premium-shadow transform group-hover:scale-110 transition-transform">

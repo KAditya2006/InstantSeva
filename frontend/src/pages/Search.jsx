@@ -117,7 +117,7 @@ const SearchPage = () => {
 
   const handleChat = async (worker) => {
     if (!token) {
-      navigate('/login');
+      navigate('/login', { state: { message: 'You have not login yet' } });
       return;
     }
 
@@ -152,7 +152,7 @@ const SearchPage = () => {
 
   const openBooking = (worker) => {
     if (!token) {
-      navigate('/login');
+      navigate('/login', { state: { message: 'You have not login yet' } });
       return;
     }
 

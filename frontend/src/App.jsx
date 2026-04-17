@@ -30,7 +30,7 @@ const ProtectedRoute = ({ children, role, requireDashboardAccess = false }) => {
   const { token, user, loading } = useAuth();
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-heading font-medium text-slate-500">Loading Hyperlocal Marketplace...</div>;
-  if (!token) return <Navigate to="/login" />;
+  if (!token) return <Navigate to="/login" state={{ message: 'You have not login yet' }} />;
   if (role && user?.role !== role) return <Navigate to="/" />;
   if (requireDashboardAccess && !user?.canAccessDashboard) {
     return <Navigate to="/profile" replace state={{ notice: getOnboardingMessage(user) }} />;
@@ -49,11 +49,7 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route 
         path="/search" 
-        element={
-          <ProtectedRoute>
-            <SearchPage />
-          </ProtectedRoute>
-        } 
+        element={<SearchPage />} 
       />
       <Route 
         path="/workers/:workerId" 

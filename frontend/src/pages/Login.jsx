@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { loginUser } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
@@ -11,7 +11,16 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
+  React.useEffect(() => {
+    if (location.state?.message) {
+      toast.error(location.state.message);
+      // Clear the state to prevent message from repeating on refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

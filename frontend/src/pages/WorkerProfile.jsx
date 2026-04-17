@@ -33,7 +33,7 @@ const WorkerProfile = () => {
   }, [workerId]);
 
   const handleChat = async () => {
-    if (!token) return navigate('/login');
+    if (!token) return navigate('/login', { state: { message: 'You have not login yet' } });
     try {
       await initiateChat({ recipientId: worker.user._id });
       navigate('/messages');
@@ -44,7 +44,7 @@ const WorkerProfile = () => {
 
   const handleBooking = async (e) => {
     e.preventDefault();
-    if (!token) return navigate('/login');
+    if (!token) return navigate('/login', { state: { message: 'You have not login yet' } });
     if (user?.role !== 'user') return toast.error('Only customers can book workers');
     if (!isAvailable) return toast.error(`Worker is currently ${availabilityStatus.toLowerCase()}`);
 
