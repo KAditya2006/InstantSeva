@@ -46,8 +46,13 @@ app.use(express.urlencoded({ extended: true }));
  * These must be defined before static files and SPA routing.
  */
 
+app.get('/robots.txt', (req, res) => {
+  const siteUrl = process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.get('host')}`;
+  res.set('Content-Type', 'text/plain');
+  res.send(`User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml`);
+});
+
 app.get('/sitemap.xml', (req, res) => {
-  // Use RENDER_EXTERNAL_URL if available, otherwise fallback to current request origin
   const siteUrl = process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.get('host')}`;
   const lastMod = new Date().toISOString().split('T')[0];
   
@@ -79,7 +84,7 @@ app.get('/sitemap.xml', (req, res) => {
   </url>
 </urlset>`;
 
-  res.set('Content-Type', 'application/xml');
+  res.set('Content-Type', 'application/xml; charset=utf-8');
   res.set('X-Content-Type-Options', 'nosniff');
   res.set('Cache-Control', 'public, max-age=0, must-revalidate'); 
   res.status(200).send(sitemap.trim());
