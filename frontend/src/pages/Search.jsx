@@ -7,6 +7,46 @@ import { CalendarDays, MapPin, MessageSquare, Search as SearchIcon, Star } from 
 import toast from 'react-hot-toast';
 import { formatInr } from '../utils/formatters';
 import { fallbackAvatar, withImageFallback } from '../utils/images';
+import { PROFESSIONS } from '../constants/professions';
+
+const SERVICE_LABELS = {
+  'ac repair/service': 'AC Repair / Service',
+  'appliances repair/service': 'Appliance Repair / Service',
+  carpenters: 'Carpenter',
+  'door/lock repair': 'Door / Lock Repair',
+  'home tutors': 'Home Tutor',
+  'house cleaner': 'House Cleaner',
+  'internet technician': 'Internet Technician',
+  'laptop/mobile reapir': 'Laptop / Mobile Repair',
+  pharamascist: 'Pharmacist'
+};
+
+const formatServiceLabel = (service) => {
+  if (SERVICE_LABELS[service]) return SERVICE_LABELS[service];
+  return service.replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const normalizeService = (service) => service.trim().toLowerCase();
+
+const isListedService = (service) => {
+  if (!service.trim()) return true;
+  const normalized = normalizeService(service);
+  return PROFESSIONS.some((profession) => normalizeService(profession) === normalized);
+};
+
+const getSuggestedServices = (service) => {
+  const normalized = normalizeService(service);
+  const matches = PROFESSIONS.filter((profession) => {
+    const normalizedProfession = normalizeService(profession);
+    return normalized && (
+      normalizedProfession.includes(normalized) ||
+      normalized.includes(normalizedProfession.split(' ')[0])
+    );
+  });
+
+  const fallback = ['plumber', 'electrician', 'house cleaner', 'home tutors', 'ac repair/service', 'appliances repair/service'];
+  return [...new Set([...(matches.length ? matches : fallback), ...fallback])].slice(0, 8);
+};
 
 const SearchPage = () => {
   const location = useLocation();
@@ -19,6 +59,15 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedWorker, setSelectedWorker] = useState(null);
   const [booking, setBooking] = useState({ service: initialQuery, scheduledDate: '', address: '', additionalNotes: '' });
+  const searchedService = filters.service.trim();
+  const searchedServiceIsListed = isListedService(searchedService);
+  const suggestedServices = getSuggestedServices(searchedService);
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search).get('q') || '';
+    setFilters((current) => current.service === query ? current : { ...current, service: query, page: 1 });
+    setBooking((current) => current.service === query ? current : { ...current, service: query });
+  }, [location.search]);
 
   const fetchWorkers = useCallback(async (e) => {
     e?.preventDefault();
@@ -66,7 +115,7 @@ const SearchPage = () => {
       });
       toast.success('Booking request sent');
       setSelectedWorker(null);
-      setBooking({ service: filters.service, scheduledDate: '', address: '', additionalNotes: '' });
+      setBooking({ service: filters.service, scheduledDate: '', address: getDefaultAddress(), additionalNotes: '' });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not create booking');
     }
@@ -86,8 +135,17 @@ const SearchPage = () => {
     setSelectedWorker(worker);
     setBooking((current) => ({
       ...current,
-      service: filters.service || worker.skills[0] || ''
+      service: filters.service || worker.skills[0] || '',
+      address: current.address || getDefaultAddress()
     }));
+  };
+
+  const getDefaultAddress = () => {
+    return [user?.location?.homeNumber, user?.location?.address].filter(Boolean).join(', ');
+  };
+
+  const searchService = (service) => {
+    navigate(`/search?q=${encodeURIComponent(service)}`);
   };
 
   return (
@@ -135,9 +193,33 @@ const SearchPage = () => {
           {loading ? (
             <div className="md:col-span-2 xl:col-span-3 text-center py-20 text-slate-400 font-bold">Searching workers...</div>
           ) : workers.length === 0 ? (
-            <div className="md:col-span-2 xl:col-span-3 bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-100">
-              <p className="font-bold text-slate-700">No approved workers found.</p>
-              <p className="text-slate-400 mt-2">Try another service or remove a price/rating filter.</p>
+            <div className="md:col-span-2 xl:col-span-3 bg-white rounded-3xl p-6 sm:p-10 text-center border border-slate-100 premium-shadow">
+              <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl mx-auto flex items-center justify-center mb-5">
+                <SearchIcon size={26} />
+              </div>
+              <p className="font-bold text-slate-800 text-xl">
+                {searchedService && !searchedServiceIsListed
+                  ? `We do not have "${searchedService}" yet.`
+                  : 'No approved workers found.'}
+              </p>
+              <p className="text-slate-500 mt-2 max-w-2xl mx-auto">
+                {searchedService && !searchedServiceIsListed
+                  ? 'Try one of our available services below, or search with a related keyword.'
+                  : 'Try another service, remove a price/rating filter, or choose one of these available services.'}
+              </p>
+
+              <div className="mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
+                {suggestedServices.map((service) => (
+                  <button
+                    key={service}
+                    type="button"
+                    onClick={() => searchService(service)}
+                    className="px-4 py-2 rounded-xl bg-primary-50 text-primary-700 border border-primary-100 font-bold hover:bg-primary-100 transition-colors"
+                  >
+                    {formatServiceLabel(service)}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : workers.map((worker) => (
             <article key={worker._id} className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 premium-shadow flex flex-col gap-5">

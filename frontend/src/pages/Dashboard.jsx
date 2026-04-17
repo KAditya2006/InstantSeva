@@ -1,12 +1,84 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { createReview, getBookings, updateBookingPayment, updateBookingStatus, verifyStartOTP } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { CalendarDays, Clock, Key, MapPin, Phone } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  Briefcase,
+  CalendarDays,
+  Car,
+  Clock,
+  Droplets,
+  Hammer,
+  Key,
+  Laptop,
+  MapPin,
+  Palette,
+  Phone,
+  Search as SearchIcon,
+  Settings,
+  Sparkles,
+  Utensils,
+  Wifi,
+  Wind,
+  Zap
+} from 'lucide-react';
 import TrackingMap from '../components/TrackingMap';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { formatInr } from '../utils/formatters';
+import { CATEGORY_METADATA, PROFESSIONS } from '../constants/professions';
+
+const ICON_MAP = {
+  BookOpen,
+  Briefcase,
+  Car,
+  Droplets,
+  Hammer,
+  Laptop,
+  Palette,
+  Settings,
+  Sparkles,
+  Utensils,
+  Wifi,
+  Wind,
+  Zap
+};
+
+const SERVICE_LABELS = {
+  'ac repair/service': 'AC Repair / Service',
+  'appliances repair/service': 'Appliance Repair / Service',
+  carpenters: 'Carpenter',
+  'door/lock repair': 'Door / Lock Repair',
+  'home tutors': 'Home Tutor',
+  'house cleaner': 'House Cleaner',
+  'internet technician': 'Internet Technician',
+  'laptop/mobile reapir': 'Laptop / Mobile Repair',
+  pharamascist: 'Pharmacist',
+  plumber: 'Plumber',
+  electrician: 'Electrician',
+  painters: 'Painter'
+};
+
+const formatServiceLabel = (service) => {
+  if (SERVICE_LABELS[service]) return SERVICE_LABELS[service];
+  return service.replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const SERVICE_CARDS = PROFESSIONS.map((service) => {
+  const meta = CATEGORY_METADATA[service] || {};
+  const Icon = ICON_MAP[meta.iconName] || Briefcase;
+
+  return {
+    name: service,
+    label: formatServiceLabel(service),
+    Icon,
+    color: meta.color || 'bg-white',
+    iconColor: meta.iconColor || 'text-primary-600'
+  };
+});
 
 const statusStyles = {
   pending: 'bg-amber-50 text-amber-700',
@@ -19,11 +91,23 @@ const statusStyles = {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewForms, setReviewForms] = useState({});
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [otpInput, setOtpInput] = useState({});
+  const [serviceQuery, setServiceQuery] = useState('');
+
+  const openServiceSearch = (service) => {
+    navigate(`/search?q=${encodeURIComponent(service)}`);
+  };
+
+  const handleServiceSearch = (e) => {
+    e.preventDefault();
+    const query = serviceQuery.trim();
+    navigate(`/search${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+  };
 
   const fetchBookings = useCallback(async (page = 1) => {
     try {
@@ -93,6 +177,49 @@ const Dashboard = () => {
           <h1 className="text-3xl sm:text-4xl font-bold font-heading text-slate-900 mt-2">Your service activity</h1>
           <p className="text-slate-500 font-medium mt-2">Track bookings, verify service OTPs, update payments, and review completed jobs.</p>
         </header>
+
+        <section className="bg-white rounded-3xl border border-slate-100 premium-shadow p-5 sm:p-8 space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-widest text-primary-600">Book A Service</p>
+              <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mt-2">What do you need today?</h2>
+              <p className="text-slate-500 font-medium mt-2">Choose a service and compare verified local experts before sending a booking request.</p>
+            </div>
+            <form onSubmit={handleServiceSearch} className="w-full lg:max-w-md bg-slate-50 rounded-2xl border border-slate-100 p-2 flex flex-col sm:flex-row gap-2">
+              <div className="flex items-center gap-3 flex-1 px-3">
+                <SearchIcon size={18} className="text-slate-400 shrink-0" />
+                <input
+                  value={serviceQuery}
+                  onChange={(e) => setServiceQuery(e.target.value)}
+                  placeholder="Search plumber, tutor, cleaner..."
+                  className="w-full min-w-0 bg-transparent py-3 outline-none font-medium"
+                />
+              </div>
+              <button className="px-5 py-3 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 transition-colors">
+                Search
+              </button>
+            </form>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+            {SERVICE_CARDS.map(({ name, label, Icon, color, iconColor }) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => openServiceSearch(name)}
+                className={`${color} min-h-36 rounded-2xl border border-slate-100 p-4 text-left flex flex-col justify-between gap-4 hover:-translate-y-1 hover:premium-shadow transition-all`}
+              >
+                <span className="w-11 h-11 rounded-xl bg-white flex items-center justify-center premium-shadow">
+                  {React.createElement(Icon, { size: 24, className: iconColor })}
+                </span>
+                <span className="flex items-end justify-between gap-2">
+                  <span className="text-sm font-black text-slate-800 leading-snug">{label}</span>
+                  <ArrowRight size={16} className="text-slate-400 shrink-0" />
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
 
         <section className="space-y-4">
           <div className="flex items-center gap-3">
