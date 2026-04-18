@@ -53,6 +53,9 @@ export const uploadKYC = (formData) => api.post('/worker/upload-kyc', formData, 
 // Admin APIs
 export const getAdminStats = () => api.get('/admin/stats');
 export const getAuditLogs = () => api.get('/admin/audit-logs');
+export const getAdminUsers = (params) => api.get('/admin/users', { params });
+export const getAdminWorkers = (params) => api.get('/admin/workers', { params });
+export const getAdminBookings = (params) => api.get('/admin/bookings', { params });
 export const getPendingWorkers = () => api.get('/admin/pending-workers');
 export const approveWorker = (data) => api.post('/admin/approve-worker', data);
 

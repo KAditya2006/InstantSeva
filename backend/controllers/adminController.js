@@ -2,7 +2,9 @@ const User = require('../models/User');
 const WorkerProfile = require('../models/WorkerProfile');
 const Booking = require('../models/Booking');
 const AuditLog = require('../models/AuditLog');
-const Notification = require('../models/Notification');
+const createNotification = require('../utils/createNotification');
+const { getPagination } = require('../utils/bookingRules');
+const escapeRegex = require('../utils/escapeRegex');
 const { syncDynamicWorkerProfile } = require('../utils/syncWorkerProfile');
 
 exports.getDashboardStats = async (req, res, next) => {
@@ -62,6 +64,135 @@ exports.getPendingWorkers = async (req, res, next) => {
   }
 };
 
+exports.getUsers = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPagination(req.query);
+    const search = String(req.query.search || '').trim();
+    const filter = { role: 'user' };
+
+    if (search) {
+      const safeSearch = escapeRegex(search);
+      filter.$or = [
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { email: { $regex: safeSearch, $options: 'i' } },
+        { phone: { $regex: safeSearch, $options: 'i' } }
+      ];
+    }
+
+    const total = await User.countDocuments(filter);
+    const users = await User.find(filter)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: users,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) || 1 }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getWorkers = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPagination(req.query);
+    const search = String(req.query.search || '').trim();
+    const status = String(req.query.status || '').trim();
+    const filter = {};
+
+    if (['pending', 'approved', 'rejected'].includes(status)) {
+      filter.approvalStatus = status;
+    }
+
+    if (search) {
+      const safeSearch = escapeRegex(search);
+      const matchingUsers = await User.find({
+        role: 'worker',
+        $or: [
+          { name: { $regex: safeSearch, $options: 'i' } },
+          { email: { $regex: safeSearch, $options: 'i' } },
+          { phone: { $regex: safeSearch, $options: 'i' } }
+        ]
+      }).select('_id').lean();
+
+      filter.$or = [
+        { user: { $in: matchingUsers.map((user) => user._id) } },
+        { skills: { $regex: safeSearch, $options: 'i' } },
+        { bio: { $regex: safeSearch, $options: 'i' } }
+      ];
+    }
+
+    const total = await WorkerProfile.countDocuments(filter);
+    const workers = await WorkerProfile.find(filter)
+      .populate('user', 'name email phone avatar location isVerified isAdminApproved createdAt')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: workers,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) || 1 }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getBookings = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPagination(req.query);
+    const search = String(req.query.search || '').trim();
+    const status = String(req.query.status || '').trim();
+    const filter = {};
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (search) {
+      const safeSearch = escapeRegex(search);
+      const matchingUsers = await User.find({
+        $or: [
+          { name: { $regex: safeSearch, $options: 'i' } },
+          { email: { $regex: safeSearch, $options: 'i' } },
+          { phone: { $regex: safeSearch, $options: 'i' } }
+        ]
+      }).select('_id').lean();
+      const matchingUserIds = matchingUsers.map((user) => user._id);
+
+      filter.$or = [
+        { service: { $regex: safeSearch, $options: 'i' } },
+        { address: { $regex: safeSearch, $options: 'i' } },
+        { user: { $in: matchingUserIds } },
+        { worker: { $in: matchingUserIds } }
+      ];
+    }
+
+    const total = await Booking.countDocuments(filter);
+    const bookings = await Booking.find(filter)
+      .populate('user', 'name email phone avatar')
+      .populate('worker', 'name email phone avatar')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: bookings,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) || 1 }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.approveWorker = async (req, res, next) => {
   try {
     const { workerId, status, rejectionReason, type } = req.body;
@@ -112,7 +243,7 @@ exports.approveWorker = async (req, res, next) => {
 
     // Create Notification for the user
     try {
-      await Notification.create({
+      await createNotification({
         user: userId,
         type: 'system',
         title: status === 'approved' ? 'Identity Verified' : 'Verification Rejected',
