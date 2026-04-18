@@ -1,5 +1,7 @@
 const Notification = require('../models/Notification');
+const PushSubscription = require('../models/PushSubscription');
 const { getPagination } = require('../utils/bookingRules');
+const { getVapidPublicKey, isPushConfigured } = require('../services/pushNotificationService');
 
 exports.getNotifications = async (req, res, next) => {
   try {
@@ -28,6 +30,71 @@ exports.markNotificationsRead = async (req, res, next) => {
   try {
     await Notification.updateMany({ user: req.user.id, read: false }, { read: true });
     res.status(200).json({ success: true, message: 'Notifications marked as read' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getPushPublicKey = async (req, res, next) => {
+  try {
+    res.status(200).json({
+      success: true,
+      enabled: isPushConfigured(),
+      publicKey: getVapidPublicKey() || null
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.savePushSubscription = async (req, res, next) => {
+  try {
+    if (!isPushConfigured()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Push notifications are not configured on the server'
+      });
+    }
+
+    const { endpoint, expirationTime, keys } = req.body;
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid push subscription'
+      });
+    }
+
+    const subscription = await PushSubscription.findOneAndUpdate(
+      { endpoint },
+      {
+        user: req.user.id,
+        endpoint,
+        expirationTime,
+        keys: {
+          p256dh: keys.p256dh,
+          auth: keys.auth
+        },
+        userAgent: req.get('user-agent'),
+        lastSeenAt: new Date()
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json({ success: true, data: subscription });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deletePushSubscription = async (req, res, next) => {
+  try {
+    const { endpoint } = req.body;
+    if (!endpoint) {
+      return res.status(400).json({ success: false, message: 'Subscription endpoint is required' });
+    }
+
+    await PushSubscription.deleteOne({ user: req.user.id, endpoint });
+    res.status(200).json({ success: true, message: 'Push subscription removed' });
   } catch (error) {
     next(error);
   }

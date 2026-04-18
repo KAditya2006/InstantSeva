@@ -3,7 +3,8 @@ const REQUIRED_IN_PRODUCTION = ['MONGO_URI', 'JWT_SECRET'];
 const OPTIONAL_SERVICE_GROUPS = {
   smtp: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS'],
   cloudinary: ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'],
-  geocoder: ['NOMINATIM_USER_AGENT']
+  geocoder: ['NOMINATIM_USER_AGENT'],
+  push: ['VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY']
 };
 
 const getMissingEnv = (keys) => keys.filter((key) => !process.env[key]);

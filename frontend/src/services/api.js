@@ -83,5 +83,8 @@ export const createReview = (bookingId, data) => api.post(`/bookings/${bookingId
 // Notification APIs
 export const getNotifications = (params) => api.get('/notifications', { params });
 export const markNotificationsRead = () => api.patch('/notifications/read');
+export const getPushPublicKey = () => api.get('/notifications/push/public-key');
+export const subscribePushNotifications = (data) => api.post('/notifications/push/subscribe', data);
+export const unsubscribePushNotifications = (data) => api.delete('/notifications/push/unsubscribe', { data });
 
 export default api;

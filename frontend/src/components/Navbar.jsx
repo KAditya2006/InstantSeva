@@ -7,6 +7,7 @@ import { getNotifications, markNotificationsRead } from '../services/api';
 import BrandLogo from './BrandLogo';
 import { fallbackAvatar, withImageFallback } from '../utils/images';
 import { getDashboardPath } from '../utils/onboarding';
+import { enablePushNotifications, getPushNotificationStatus } from '../utils/pushNotifications';
 import toast from 'react-hot-toast';
 
 const Navbar = () => {
@@ -15,6 +16,7 @@ const Navbar = () => {
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pushStatus, setPushStatus] = useState('checking');
 
   useEffect(() => {
     if (!token) return;
@@ -30,6 +32,9 @@ const Navbar = () => {
     };
 
     fetchNotifications();
+    getPushNotificationStatus()
+      .then(setPushStatus)
+      .catch(() => setPushStatus('available'));
 
     // Socket for real-time notifications
     const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
@@ -50,6 +55,27 @@ const Navbar = () => {
 
     return () => socket.disconnect();
   }, [token]);
+
+  const handleEnablePushNotifications = async () => {
+    setPushStatus('checking');
+    try {
+      const status = await enablePushNotifications();
+      setPushStatus(status);
+
+      if (status === 'enabled') {
+        toast.success('Phone alerts enabled');
+      } else if (status === 'blocked') {
+        toast.error('Notifications are blocked in your browser settings');
+      } else if (status === 'not-configured') {
+        toast.error('Push notification keys are not configured on the server');
+      } else {
+        toast.error('Could not enable phone alerts');
+      }
+    } catch (error) {
+      setPushStatus('available');
+      toast.error(error.response?.data?.message || 'Could not enable phone alerts');
+    }
+  };
 
   const handleNotificationOpen = async () => {
     const nextOpen = !open;
@@ -88,6 +114,31 @@ const Navbar = () => {
               </button>
               {open && (
                 <div className="fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-3 sm:w-80 bg-white border border-slate-100 rounded-2xl premium-shadow overflow-hidden">
+                  {pushStatus !== 'unsupported' && (
+                    <div className="p-3 border-b border-slate-50 bg-slate-50/70">
+                      {pushStatus === 'enabled' && (
+                        <p className="text-xs font-bold text-emerald-700">Phone alerts are on.</p>
+                      )}
+                      {pushStatus === 'available' && (
+                        <button
+                          type="button"
+                          onClick={handleEnablePushNotifications}
+                          className="w-full rounded-xl bg-primary-600 px-3 py-2 text-xs font-bold text-white hover:bg-primary-700"
+                        >
+                          Enable phone alerts
+                        </button>
+                      )}
+                      {pushStatus === 'checking' && (
+                        <p className="text-xs font-bold text-slate-400">Checking phone alerts...</p>
+                      )}
+                      {pushStatus === 'blocked' && (
+                        <p className="text-xs font-bold text-rose-600">Notifications are blocked in browser settings.</p>
+                      )}
+                      {pushStatus === 'not-configured' && (
+                        <p className="text-xs font-bold text-amber-700">Push keys are not configured on the server.</p>
+                      )}
+                    </div>
+                  )}
                   {notifications.length === 0 ? (
                     <p className="p-4 text-sm text-slate-400 font-bold">No notifications yet.</p>
                   ) : notifications.map((notification) => (
