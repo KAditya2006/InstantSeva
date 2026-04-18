@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { formatInr } from '../utils/formatters';
 import { fallbackAvatar, withImageFallback } from '../utils/images';
 import { getWorkerAvailabilityClass, getWorkerAvailabilityStatus } from '../utils/workerAvailability';
-import { PROFESSIONS } from '../constants/professions';
+import { PROFESSIONS, SERVICE_ALIASES } from '../constants/professions';
 
 const SERVICE_LABELS = {
   'ac repair/service': 'AC Repair / Service',
@@ -18,7 +18,9 @@ const SERVICE_LABELS = {
   'home tutors': 'Home Tutor',
   'house cleaner': 'House Cleaner',
   'internet technician': 'Internet Technician',
+  'laptop/mobile repair': 'Laptop / Mobile Repair',
   'laptop/mobile reapir': 'Laptop / Mobile Repair',
+  pharmacist: 'Pharmacist',
   pharamascist: 'Pharmacist'
 };
 
@@ -28,15 +30,16 @@ const formatServiceLabel = (service) => {
 };
 
 const normalizeService = (service) => service.trim().toLowerCase();
+const normalizeServiceAlias = (service) => SERVICE_ALIASES[normalizeService(service)] || normalizeService(service);
 
 const isListedService = (service) => {
   if (!service.trim()) return true;
-  const normalized = normalizeService(service);
+  const normalized = normalizeServiceAlias(service);
   return PROFESSIONS.some((profession) => normalizeService(profession) === normalized);
 };
 
 const getSuggestedServices = (service) => {
-  const normalized = normalizeService(service);
+  const normalized = normalizeServiceAlias(service);
   const matches = PROFESSIONS.filter((profession) => {
     const normalizedProfession = normalizeService(profession);
     return normalized && (

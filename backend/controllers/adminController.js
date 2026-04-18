@@ -3,6 +3,7 @@ const WorkerProfile = require('../models/WorkerProfile');
 const Booking = require('../models/Booking');
 const AuditLog = require('../models/AuditLog');
 const Notification = require('../models/Notification');
+const { syncDynamicWorkerProfile } = require('../utils/syncWorkerProfile');
 
 exports.getDashboardStats = async (req, res, next) => {
   try {
@@ -103,6 +104,10 @@ exports.approveWorker = async (req, res, next) => {
 
     if (!result) {
        return res.status(404).json({ success: false, message: 'Identity record not found' });
+    }
+
+    if (type === 'worker') {
+      await syncDynamicWorkerProfile(result);
     }
 
     // Create Notification for the user

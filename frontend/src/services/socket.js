@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.DEV ? 'http://localhost:5000' : window.location.origin);
 
 let socket;
 
@@ -39,6 +39,15 @@ export const subscribeToNotifications = (callback) => {
   };
   socket.on('new_notification', handler);
   return () => socket?.off('new_notification', handler);
+};
+
+export const subscribeToMessageStatus = (callback) => {
+  if (!socket) return;
+  const handler = (status) => {
+    callback(null, status);
+  };
+  socket.on('message_status_updated', handler);
+  return () => socket?.off('message_status_updated', handler);
 };
 
 export const getSocket = () => socket;

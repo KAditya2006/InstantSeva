@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getBookings, getWorkerProfile, updateBookingStatus, updateWorkerProfile, uploadKYC, verifyCompletionOTP } from '../services/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { getBookings, getWorkerProfile, initiateChat, updateBookingStatus, updateWorkerProfile, uploadKYC, verifyCompletionOTP } from '../services/api';
 import Navbar from '../components/Navbar';
 import BookingDetailsModal from '../components/BookingDetailsModal';
-import { LayoutDashboard, FileCheck, DollarSign, Briefcase, Star, Clock, AlertCircle, CheckCircle2, Upload, User as UserIcon, XCircle, Key } from 'lucide-react';
+import { LayoutDashboard, FileCheck, DollarSign, Briefcase, Star, Clock, AlertCircle, CheckCircle2, Upload, User as UserIcon, XCircle, Key, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { formatInr } from '../utils/formatters';
@@ -15,6 +16,7 @@ const WorkerDashboard = () => {
   const [kycFiles, setKycFiles] = useState({ idProof: null });
   const [uploading, setUploading] = useState(false);
   const { setUser } = useAuth();
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [jobsPagination, setJobsPagination] = useState({ page: 1, pages: 1 });
   const [profileForm, setProfileForm] = useState({ skills: '', experience: 0, bio: '', amount: '', unit: 'hour', availabilityStatus: 'Available' });
@@ -103,6 +105,21 @@ const WorkerDashboard = () => {
     }
   };
 
+  const handleCustomerChat = async (booking) => {
+    const recipientId = booking.user?._id || booking.user?.id || booking.user;
+    if (!recipientId) {
+      toast.error('Customer details are not available yet');
+      return;
+    }
+
+    try {
+      const { data } = await initiateChat({ recipientId });
+      navigate('/messages', { state: { chatId: data.data._id } });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not open chat');
+    }
+  };
+
   const handleKycSubmit = async (e) => {
     e.preventDefault();
 
@@ -166,6 +183,9 @@ const WorkerDashboard = () => {
             <button onClick={() => setActiveSection('jobs')} className={`flex-1 lg:flex-none flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all whitespace-nowrap ${activeSection === 'jobs' ? 'bg-primary-50 text-primary-600' : 'text-slate-500 hover:bg-slate-50'}`}>
               <Briefcase size={20} /> My Jobs
             </button>
+            <Link to="/messages" className="flex-1 lg:flex-none flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all whitespace-nowrap text-slate-500 hover:bg-slate-50">
+              <MessageSquare size={20} /> Messages
+            </Link>
             <button onClick={() => setActiveSection('kyc')} className={`flex-1 lg:flex-none flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all whitespace-nowrap ${activeSection === 'kyc' ? 'bg-primary-50 text-primary-600' : 'text-slate-500 hover:bg-slate-50'}`}>
               <FileCheck size={20} /> KYC Verification
             </button>
@@ -349,6 +369,11 @@ const WorkerDashboard = () => {
                     <span className="inline-block mt-2 bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold uppercase">{booking.status}</span>
                   </div>
                   <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
+                    {booking.user && (
+                      <button onClick={() => handleCustomerChat(booking)} className="px-4 py-2 rounded-xl bg-primary-50 text-primary-700 font-bold flex items-center gap-2">
+                        <MessageSquare size={16} /> Chat Customer
+                      </button>
+                    )}
                     {booking.status === 'pending' && (
                       <>
                         <button onClick={() => handleJobStatus(booking._id, 'accepted')} className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold">Accept</button>

@@ -20,6 +20,41 @@ const getId = (value) => {
   return value._id ? value._id.toString() : value.toString();
 };
 
+const getViewerId = (viewer) => {
+  if (!viewer) return null;
+  return viewer.id ? viewer.id.toString() : getId(viewer);
+};
+
+const isBookingCustomer = (booking, viewer) => getId(booking?.user) === getViewerId(viewer);
+const isBookingWorker = (booking, viewer) => getId(booking?.worker) === getViewerId(viewer);
+
+const parseFutureScheduledDate = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  if (date.getTime() <= Date.now()) return null;
+  return date;
+};
+
+const sanitizeBookingForViewer = (booking, viewer) => {
+  const plainBooking = booking?.toObject ? booking.toObject() : { ...booking };
+  const startOTP = plainBooking.startOTP;
+  const completionOTP = plainBooking.completionOTP;
+  const canSeeStartOTP = isBookingWorker(plainBooking, viewer) && plainBooking.status === 'accepted' && !plainBooking.startOTPVerified;
+  const canSeeCompletionOTP = isBookingCustomer(plainBooking, viewer) && plainBooking.status === 'in_progress' && !plainBooking.completionOTPVerified;
+
+  delete plainBooking.startOTP;
+  delete plainBooking.completionOTP;
+
+  if (canSeeStartOTP) plainBooking.startOTP = startOTP;
+  if (canSeeCompletionOTP) plainBooking.completionOTP = completionOTP;
+
+  return plainBooking;
+};
+
+const sanitizeBookingsForViewer = (bookings, viewer) => {
+  return bookings.map((booking) => sanitizeBookingForViewer(booking, viewer));
+};
+
 const attachContactDetails = async (bookings) => {
   const plainBookings = bookings.map((booking) => booking.toObject ? booking.toObject() : booking);
   const bookingIds = plainBookings.map((booking) => booking._id).filter(Boolean);
@@ -64,6 +99,11 @@ exports.createBooking = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Worker, service, date, and address are required' });
   }
 
+  const parsedScheduledDate = parseFutureScheduledDate(scheduledDate);
+  if (!parsedScheduledDate) {
+    return res.status(400).json({ success: false, message: 'Please choose a valid future date and time' });
+  }
+
   if (req.user.role !== 'user') {
     return res.status(403).json({ success: false, message: 'Only customers can create bookings' });
   }
@@ -90,7 +130,7 @@ exports.createBooking = asyncHandler(async (req, res) => {
     user: req.user.id,
     worker: workerId,
     service,
-    scheduledDate,
+    scheduledDate: parsedScheduledDate,
     address,
     additionalNotes,
     totalPrice: calculateBookingPrice(profile)
@@ -115,7 +155,7 @@ exports.createBooking = asyncHandler(async (req, res) => {
 
   const populatedBooking = await populateBooking(Booking.findById(booking._id));
   const finalData = await attachContactDetails([populatedBooking]);
-  res.status(201).json({ success: true, data: finalData[0] });
+  res.status(201).json({ success: true, data: sanitizeBookingForViewer(finalData[0], req.user) });
 });
 
 exports.getBookings = asyncHandler(async (req, res) => {
@@ -137,7 +177,7 @@ exports.getBookings = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    data: bookingsWithDetails,
+    data: sanitizeBookingsForViewer(bookingsWithDetails, req.user),
     pagination: { page, limit, total, pages: Math.ceil(total / limit) || 1 }
   });
 });
@@ -196,6 +236,13 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
     booking.startOTP = otp;
     await booking.save();
 
+    const profile = await WorkerProfile.findOneAndUpdate(
+      { user: booking.worker },
+      { availabilityStatus: 'Busy' },
+      { new: true }
+    );
+    await syncDynamicWorkerProfile(profile);
+
     const workerPopulated = await User.findById(booking.worker);
     await sendOTPEmail(workerPopulated.email, otp, 'Start');
 
@@ -220,7 +267,7 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
 
   const populatedBooking = await populateBooking(Booking.findById(booking._id));
   const finalData = await attachContactDetails([populatedBooking]);
-  res.status(200).json({ success: true, data: finalData[0] });
+  res.status(200).json({ success: true, data: sanitizeBookingForViewer(finalData[0], req.user) });
 });
 
 exports.updatePaymentStatus = asyncHandler(async (req, res) => {
@@ -267,7 +314,7 @@ exports.updatePaymentStatus = asyncHandler(async (req, res) => {
 
   const populatedBooking = await populateBooking(Booking.findById(booking._id));
   const finalData = await attachContactDetails([populatedBooking]);
-  res.status(200).json({ success: true, data: finalData[0] });
+  res.status(200).json({ success: true, data: sanitizeBookingForViewer(finalData[0], req.user) });
 });
 
 exports.createReview = asyncHandler(async (req, res) => {
@@ -305,10 +352,15 @@ exports.createReview = asyncHandler(async (req, res) => {
       { $group: { _id: '$worker', averageRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } }
     ]);
 
-    await WorkerProfile.findOneAndUpdate({ user: booking.worker }, {
-      averageRating: stats[0]?.averageRating || 0,
-      totalReviews: stats[0]?.totalReviews || 0
-    });
+    const profile = await WorkerProfile.findOneAndUpdate(
+      { user: booking.worker },
+      {
+        averageRating: stats[0]?.averageRating || 0,
+        totalReviews: stats[0]?.totalReviews || 0
+      },
+      { new: true }
+    );
+    await syncDynamicWorkerProfile(profile);
 
     await AuditLog.create({
       actor: req.user.id,
@@ -340,7 +392,15 @@ exports.verifyStartOTP = asyncHandler(async (req, res) => {
   const submittedOtp = String(req.body.otp || '').trim();
   const booking = await Booking.findById(req.params.id);
 
-  if (!booking || booking.status !== 'accepted') {
+  if (!booking) {
+    return res.status(404).json({ success: false, message: 'Booking not found' });
+  }
+
+  if (!isBookingCustomer(booking, req.user)) {
+    return res.status(403).json({ success: false, message: 'Only the customer can verify the worker OTP' });
+  }
+
+  if (booking.status !== 'accepted') {
     return res.status(400).json({ success: false, message: 'Booking not in valid state for verification' });
   }
 
@@ -375,14 +435,24 @@ exports.verifyStartOTP = asyncHandler(async (req, res) => {
   const userPopulated = await User.findById(booking.user);
   await sendOTPEmail(userPopulated.email, completionOTP, 'Completion');
 
-  res.status(200).json({ success: true, message: 'Job verified and started', data: booking });
+  const populatedBooking = await populateBooking(Booking.findById(booking._id));
+  const finalData = await attachContactDetails([populatedBooking]);
+  res.status(200).json({ success: true, message: 'Job verified and started', data: sanitizeBookingForViewer(finalData[0], req.user) });
 });
 
 exports.verifyCompletionOTP = asyncHandler(async (req, res) => {
   const submittedOtp = String(req.body.otp || '').trim();
   const booking = await Booking.findById(req.params.id);
 
-  if (!booking || booking.status !== 'in_progress') {
+  if (!booking) {
+    return res.status(404).json({ success: false, message: 'Booking not found' });
+  }
+
+  if (!isBookingWorker(booking, req.user)) {
+    return res.status(403).json({ success: false, message: 'Only the assigned worker can verify the completion OTP' });
+  }
+
+  if (booking.status !== 'in_progress') {
     return res.status(400).json({ success: false, message: 'Booking is not in progress' });
   }
 
@@ -410,5 +480,7 @@ exports.verifyCompletionOTP = asyncHandler(async (req, res) => {
     entityId: booking._id
   });
 
-  res.status(200).json({ success: true, message: 'Job verified and completed', data: booking });
+  const populatedBooking = await populateBooking(Booking.findById(booking._id));
+  const finalData = await attachContactDetails([populatedBooking]);
+  res.status(200).json({ success: true, message: 'Job verified and completed', data: sanitizeBookingForViewer(finalData[0], req.user) });
 });

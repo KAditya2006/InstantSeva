@@ -46,6 +46,7 @@ const io = new Server(server, {
 const Chat = require('./models/Chat');
 const Message = require('./models/Message');
 const createNotification = require('./utils/createNotification');
+const { markDeliveredForUser } = require('./controllers/chatController');
 
 io.use(async (socket, next) => {
   try {
@@ -71,6 +72,9 @@ io.use(async (socket, next) => {
 // Socket logic
 io.on('connection', (socket) => {
   logDev('A user connected:', socket.user._id.toString());
+  markDeliveredForUser({ io, userId: socket.user._id }).catch((error) => {
+    console.error('Message delivery receipt error:', error.message);
+  });
 
   socket.on('join_chat', async (chatId) => {
     const chat = await Chat.findOne({ _id: chatId, participants: socket.user._id });
@@ -90,12 +94,19 @@ io.on('connection', (socket) => {
       if (!content && messageType !== 'image') return;
 
       // Create and save message
+      const recipientIds = chat.participants
+        .filter((participantId) => participantId.toString() !== socket.user._id.toString());
+      const onlineRecipientIds = recipientIds
+        .filter((participantId) => io.sockets.adapter.rooms.get(participantId.toString())?.size);
+
       const message = await Message.create({
         chatId,
         sender: socket.user._id,
         content,
         messageType,
-        imageUrl
+        imageUrl,
+        deliveredTo: onlineRecipientIds,
+        readBy: [socket.user._id]
       });
 
       // Update chat last message
@@ -109,9 +120,14 @@ io.on('connection', (socket) => {
 
       // Populate sender details for the frontend
       const populatedMessage = await Message.findById(message._id).populate('sender', 'name avatar');
+      const messagePayload = populatedMessage.toObject();
+      messagePayload.chatId = chatId.toString();
 
       // Emit to the chat room
-      io.to(chatId).emit('receive_message', populatedMessage);
+      io.to(chatId).emit('receive_message', messagePayload);
+      chat.participants.forEach((participantId) => {
+        io.to(participantId.toString()).emit('receive_message', messagePayload);
+      });
 
       // Also emit a notification to the recipient's personal room
       chat.participants

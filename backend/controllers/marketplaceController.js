@@ -1,8 +1,14 @@
 const WorkerProfile = require('../models/WorkerProfile');
-const { getWorkerModel } = require('../models/WorkerModels');
 const Review = require('../models/Review');
 const { getPagination } = require('../utils/bookingRules');
 const escapeRegex = require('../utils/escapeRegex');
+
+const SERVICE_ALIASES = {
+  pharmacist: ['pharmacist', 'pharamascist'],
+  pharamascist: ['pharmacist', 'pharamascist'],
+  'laptop/mobile repair': ['laptop/mobile repair', 'laptop/mobile reapir'],
+  'laptop/mobile reapir': ['laptop/mobile repair', 'laptop/mobile reapir']
+};
 
 const parseCoordinate = (value) => {
   const parsed = Number(value);
@@ -60,36 +66,33 @@ const sortWorkersByDistance = (workers, origin) => {
     });
 };
 
+const getSearchTerms = (searchTerm) => {
+  const normalized = String(searchTerm || '').trim().toLowerCase();
+  if (!normalized) return [];
+  return [...new Set([normalized, ...(SERVICE_ALIASES[normalized] || [])])];
+};
+
 exports.searchWorkers = async (req, res, next) => {
   try {
     const { service, q, minRating, maxPrice } = req.query;
     const { page, limit, skip } = getPagination(req.query);
     const origin = getSearchOrigin(req.query);
     const filter = {
-      approvalStatus: 'approved'
+      approvalStatus: 'approved',
+      availabilityStatus: { $ne: 'Offline' }
     };
 
     const searchTerm = service || q;
-    let CurrentModel = WorkerProfile;
-
-    // If searching for a specific service, try the dynamic collection first
-    if (service) {
-      CurrentModel = getWorkerModel(service);
-    }
-
-    if (CurrentModel === WorkerProfile) {
-      filter.availabilityStatus = { $ne: 'Offline' };
-    } else {
-      filter.availability = true;
-    }
 
     if (searchTerm) {
-      const safeTerm = escapeRegex(searchTerm);
-      filter.$or = [
-        { professions: { $regex: safeTerm, $options: 'i' } },
-        { bio: { $regex: safeTerm, $options: 'i' } },
-        { skills: { $regex: safeTerm, $options: 'i' } }
-      ];
+      const searchTerms = getSearchTerms(searchTerm);
+      filter.$or = searchTerms.flatMap((term) => {
+        const safeTerm = escapeRegex(term);
+        return [
+          { skills: { $regex: safeTerm, $options: 'i' } },
+          { bio: { $regex: safeTerm, $options: 'i' } }
+        ];
+      });
     }
 
     if (minRating) {
@@ -100,7 +103,7 @@ exports.searchWorkers = async (req, res, next) => {
       filter['pricing.amount'] = { $lte: Number(maxPrice) };
     }
 
-    const query = CurrentModel.find(filter)
+    const query = WorkerProfile.find(filter)
       .populate('user', 'name email avatar phone location')
       .sort({ averageRating: -1, totalReviews: -1, updatedAt: -1 });
 
@@ -108,7 +111,7 @@ exports.searchWorkers = async (req, res, next) => {
       query.skip(skip).limit(limit);
     }
 
-    const total = await CurrentModel.countDocuments(filter);
+    const total = await WorkerProfile.countDocuments(filter);
     const matchedWorkers = await query;
     const workers = origin ? sortWorkersByDistance(matchedWorkers, origin).slice(skip, skip + limit) : matchedWorkers;
 

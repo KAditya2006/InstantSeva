@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Loader2, Search } from 'lucide-react';
-import axios from 'axios';
+import { searchLocations } from '../services/api';
 
 const AddressAutocomplete = ({ value, onChange, placeholder = "Enter your location", className = "" }) => {
   const [query, setQuery] = useState(value || '');
@@ -32,20 +32,8 @@ const AddressAutocomplete = ({ value, onChange, placeholder = "Enter your locati
 
     setLoading(true);
     try {
-      // Using Nominatim API (OpenStreetMap)
-      const response = await axios.get('https://nominatim.openstreetmap.org/search', {
-        params: {
-          q: searchText,
-          format: 'json',
-          addressdetails: 1,
-          limit: 5,
-        },
-        headers: {
-          'Accept-Language': 'en-US,en;q=0.5',
-          'User-Agent': 'InstantSeva-App' // Required by Nominatim Policy
-        }
-      });
-      setSuggestions(response.data);
+      const response = await searchLocations({ q: searchText, limit: 5 });
+      setSuggestions(response.data?.data || []);
       setShowDropdown(true);
     } catch (error) {
       console.error('Error fetching address suggestions:', error);

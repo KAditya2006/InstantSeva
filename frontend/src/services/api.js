@@ -60,6 +60,8 @@ export const approveWorker = (data) => api.post('/admin/approve-worker', data);
 export const getChats = () => api.get('/chat');
 export const getMessages = (chatId, params) => api.get(`/chat/${chatId}`, { params });
 export const initiateChat = (data) => api.post('/chat/initiate', data);
+export const sendTextMessage = (chatId, data) => api.post(`/chat/${chatId}/messages`, data);
+export const markChatRead = (chatId) => api.patch(`/chat/${chatId}/read`);
 export const uploadImageMessage = (formData) => api.post('/chat/upload-image', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
@@ -67,6 +69,7 @@ export const uploadImageMessage = (formData) => api.post('/chat/upload-image', f
 // Marketplace APIs
 export const searchWorkers = (params) => api.get('/marketplace/workers', { params });
 export const getWorkerDetails = (workerId) => api.get(`/marketplace/workers/${workerId}`);
+export const searchLocations = (params) => api.get('/marketplace/locations/search', { params });
 
 // Booking APIs
 export const getBookings = (params) => api.get('/bookings', { params });

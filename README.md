@@ -39,6 +39,8 @@ For deployment, configure these backend environment variables in Render:
 - `CLOUDINARY_API_SECRET`
 - `CLIENT_ORIGIN`
 - `RENDER_EXTERNAL_URL`
+- `NOMINATIM_USER_AGENT`
+- `GEOCODER_COUNTRY_CODES`
 
 ## Development
 
