@@ -111,11 +111,31 @@ app.use('/api', (req, res) => {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 if (hasFrontendBuild) {
+  const seoStaticFiles = {
+    '/sitemap.xml': { fileName: 'sitemap.xml', contentType: 'application/xml; charset=utf-8' },
+    '/robots.txt': { fileName: 'robots.txt', contentType: 'text/plain; charset=utf-8' },
+    '/site.webmanifest': { fileName: 'site.webmanifest', contentType: 'application/manifest+json; charset=utf-8' }
+  };
+
+  Object.entries(seoStaticFiles).forEach(([route, fileConfig]) => {
+    app.get(route, (req, res, next) => {
+      const filePath = path.join(frontendDistPath, fileConfig.fileName);
+
+      if (!fs.existsSync(filePath)) {
+        return next();
+      }
+
+      res.setHeader('Content-Type', fileConfig.contentType);
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      return res.sendFile(filePath);
+    });
+  });
+
   // Serve static assets from the frontend build
   app.use(express.static(frontendDistPath));
 
   // Catch-all route to serve index.html for React SPA
-  app.get(/^(?!\/api|\/sitemap\.xml|\/robots\.txt).+/, (req, res) => {
+  app.get(/^(?!\/api|\/sitemap\.xml|\/robots\.txt|\/site\.webmanifest).+/, (req, res) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 } else {
