@@ -1,4 +1,5 @@
 import React, { lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -20,17 +21,22 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const WorkerProfile = lazy(() => import('./pages/WorkerProfile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center font-heading font-medium text-slate-500">
-    Loading InstantSeva...
-  </div>
-);
+const PageLoader = () => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="min-h-screen flex items-center justify-center font-heading font-medium text-slate-500">
+      {t('common.loadingInstantSeva')}
+    </div>
+  );
+};
 
 const ProtectedRoute = ({ children, role, requireDashboardAccess = false }) => {
+  const { t } = useTranslation();
   const { token, user, loading } = useAuth();
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-heading font-medium text-slate-500">Loading Hyperlocal Marketplace...</div>;
-  if (!token) return <Navigate to="/login" state={{ message: 'You have not login yet' }} />;
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-heading font-medium text-slate-500">{t('common.loadingMarketplace')}</div>;
+  if (!token) return <Navigate to="/login" state={{ message: t('auth.notLoggedIn') }} />;
   if (role && user?.role !== role) return <Navigate to="/" />;
   if (requireDashboardAccess && !user?.canAccessDashboard) {
     return <Navigate to="/profile" replace state={{ notice: getOnboardingMessage(user) }} />;

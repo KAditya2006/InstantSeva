@@ -12,7 +12,37 @@ const messages = {
     invalidCredentials: 'Invalid credentials',
     verifyBeforeLogin: 'Please verify your email before logging in',
     userExists: 'User already exists',
-    registrationOk: 'Registration successful. Please verify your email.'
+    registrationOk: 'Registration successful. Please verify your email.',
+    adminNameEmailPasswordRequired: 'Name, email, and password are required',
+    adminWorkerRequired: 'Name, email, password, skills, and bio are required',
+    adminUserExists: 'A user with this email already exists',
+    adminUserCreated: 'User added successfully',
+    adminWorkerCreated: 'Worker added successfully',
+    adminCannotDeleteSelf: 'You cannot delete your own admin account',
+    adminUserNotFound: 'User not found',
+    adminWorkerNotFound: 'Worker not found',
+    adminWorkerAccountNotFound: 'Worker account not found',
+    adminUserActiveBooking: 'This user has an active booking. Complete or cancel active bookings before deleting.',
+    adminWorkerActiveBooking: 'This worker has an active booking. Complete or cancel active bookings before deleting.',
+    adminUserDeleted: 'User deleted successfully',
+    adminWorkerDeleted: 'Worker deleted successfully',
+    invalidStatus: 'Invalid status',
+    identityNotFound: 'Identity record not found',
+    identityVerifiedTitle: 'Identity Verified',
+    verificationRejectedTitle: 'Verification Rejected',
+    identityVerifiedMessage: 'Your account has been successfully verified. You now have full access to platform features.',
+    documentsUnclear: 'Documents were unclear',
+    verificationRejectedMessage: 'Your verification request was declined. Reason: {{reason}}. Please re-upload your ID proof.',
+    identityStatusUpdated: 'Identity {{status}} successfully',
+    chatValidRecipientRequired: 'A valid recipient is required',
+    recipientNotFound: 'Recipient not found',
+    chatRestricted: 'You can only start chats related to approved services or your assigned jobs',
+    chatNotFound: 'Chat not found',
+    messageEmpty: 'Message cannot be empty',
+    imageRequiredForChat: 'No image uploaded',
+    newMessageTitle: 'New message',
+    sentImage: 'Sent an image',
+    sentImageNotification: '{{name}} sent an image'
   },
   hi: {
     userNotFound: 'User not found',
@@ -39,9 +69,16 @@ const messages = {
   }
 };
 
-const tServer = (key, language = 'en') => {
+const interpolate = (message, params = {}) => {
+  return String(message).replace(/\{\{(\w+)\}\}/g, (_, token) => (
+    params[token] === undefined || params[token] === null ? '' : String(params[token])
+  ));
+};
+
+const tServer = (key, language = 'en', params = {}) => {
   const lang = normalizeLanguage(language);
-  return messages[lang]?.[key] || messages.en[key] || key;
+  const message = messages[lang]?.[key] || messages.en[key] || key;
+  return interpolate(message, params);
 };
 
 module.exports = {

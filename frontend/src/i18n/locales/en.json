@@ -34,7 +34,9 @@
     "enablePhoneAlerts": "Enable phone alerts",
     "checkingPhoneAlerts": "Checking phone alerts...",
     "blockedPhoneAlerts": "Notifications are blocked in browser settings.",
-    "pushNotConfigured": "Push keys are not configured on the server."
+    "pushNotConfigured": "Push keys are not configured on the server.",
+    "loadingInstantSeva": "Loading InstantSeva...",
+    "loadingMarketplace": "Loading Hyperlocal Marketplace..."
   },
   "navbar": {
     "searchServices": "Search Services",
@@ -104,7 +106,8 @@
     "failedResend": "Failed to resend OTP",
     "pleaseVerifyOtpSent": "Please verify your email. OTP sent again.",
     "loginFailed": "Login failed",
-    "registrationFailed": "Registration failed"
+    "registrationFailed": "Registration failed",
+    "notLoggedIn": "You have not login yet"
   },
   "search": {
     "title": "Find Local Experts",
@@ -166,6 +169,47 @@
     "invalidOtp": "Invalid OTP",
     "pleaseSelectRating": "Please select a rating",
     "couldNotSubmitReview": "Could not submit review"
+  },
+  "admin": {
+    "user": "user",
+    "worker": "worker",
+    "failedLoadData": "Failed to load admin data",
+    "failedLoadList": "Failed to load admin list",
+    "deleteFailed": "Could not delete {{label}}",
+    "deleteTitle": "Delete {{label}}",
+    "deleteWarning": "{{name}} will be permanently removed. Existing active bookings are still protected, but account data, chats, notifications, OTPs, and subscriptions can be removed.",
+    "thisAccount": "this {{label}}",
+    "typeDelete": "Type DELETE to confirm",
+    "confirmDelete": "Delete account",
+    "deleting": "Deleting..."
+  },
+  "chat": {
+    "messages": "Messages",
+    "searchConversations": "Search conversations...",
+    "startConversation": "Start a conversation",
+    "noMessages": "No messages yet",
+    "back": "Back",
+    "activeNow": "Active Now",
+    "offline": "Offline",
+    "today": "Today",
+    "loadOlder": "Load older messages",
+    "writeMessage": "Write your message...",
+    "selectConversation": "Select a Conversation",
+    "selectConversationHint": "Connect with experts and residents from your marketplace in real-time.",
+    "loadingConversations": "Loading your conversations...",
+    "failedLoadMessages": "Failed to load messages",
+    "failedLoadChats": "Failed to load chats",
+    "failedLoadOlder": "Failed to load older messages",
+    "messageNotSaved": "Message was not saved. Please try again.",
+    "sendingImage": "Sending image...",
+    "imageSent": "Image sent",
+    "failedSendImage": "Failed to send image",
+    "sent": "Sent",
+    "delivered": "Delivered",
+    "read": "Read",
+    "sentImage": "Sent image",
+    "participantAvatar": "User avatar",
+    "activeAvatar": "Active conversation avatar"
   },
   "voice": {
     "speak": "Speak",
@@ -254,7 +298,6 @@
     "Sign In": "Sign In",
     "New here?": "New here?",
     "Create an account": "Create an account",
-    "Create an Account": "Create an Account",
     "Join InstantSeva and discover talented pros.": "Join InstantSeva and discover talented pros.",
     "I'm a Customer": "I'm a Customer",
     "I'm a Worker": "I'm a Worker",

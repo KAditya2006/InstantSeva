@@ -14,7 +14,7 @@ const getPreferredLanguage = (req) => {
 
 const languageMiddleware = (req, res, next) => {
   req.language = getPreferredLanguage(req);
-  req.t = (key) => tServer(key, req.language);
+  req.t = (key, params) => tServer(key, req.language, params);
   res.setHeader('Content-Language', req.language);
   next();
 };

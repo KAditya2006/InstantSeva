@@ -266,13 +266,13 @@ exports.createUser = async (req, res, next) => {
     const { name, email, password, phone, address, city, pincode } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+      return res.status(400).json({ success: false, message: req.t('adminNameEmailPasswordRequired') });
     }
 
     const normalizedEmail = normalizeEmail(email);
     const existingUser = await User.findOne({ email: normalizedEmail }).select('_id').lean();
     if (existingUser) {
-      return res.status(409).json({ success: false, message: 'A user with this email already exists' });
+      return res.status(409).json({ success: false, message: req.t('adminUserExists') });
     }
 
     const user = await User.create({
@@ -298,7 +298,7 @@ exports.createUser = async (req, res, next) => {
     const safeUser = user.toObject();
     delete safeUser.password;
 
-    res.status(201).json({ success: true, message: 'User added successfully', data: safeUser });
+    res.status(201).json({ success: true, message: req.t('adminUserCreated'), data: safeUser });
   } catch (error) {
     next(error);
   }
@@ -325,14 +325,14 @@ exports.createWorker = async (req, res, next) => {
     if (!name || !email || !password || workerSkills.length === 0 || !bio) {
       return res.status(400).json({
         success: false,
-        message: 'Name, email, password, skills, and bio are required'
+        message: req.t('adminWorkerRequired')
       });
     }
 
     const normalizedEmail = normalizeEmail(email);
     const existingUser = await User.findOne({ email: normalizedEmail }).select('_id').lean();
     if (existingUser) {
-      return res.status(409).json({ success: false, message: 'A user with this email already exists' });
+      return res.status(409).json({ success: false, message: req.t('adminUserExists') });
     }
 
     const user = await User.create({
@@ -373,7 +373,7 @@ exports.createWorker = async (req, res, next) => {
       .populate('user', 'name email phone avatar location isVerified isAdminApproved createdAt')
       .lean();
 
-    res.status(201).json({ success: true, message: 'Worker added successfully', data: populatedWorker });
+    res.status(201).json({ success: true, message: req.t('adminWorkerCreated'), data: populatedWorker });
   } catch (error) {
     next(error);
   }
@@ -383,18 +383,18 @@ exports.deleteUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
     if (userId === req.user.id.toString()) {
-      return res.status(400).json({ success: false, message: 'You cannot delete your own admin account' });
+      return res.status(400).json({ success: false, message: req.t('adminCannotDeleteSelf') });
     }
 
     const user = await User.findOne({ _id: userId, role: 'user' }).lean();
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ success: false, message: req.t('adminUserNotFound') });
     }
 
     if (await hasActiveBookings(user._id)) {
       return res.status(409).json({
         success: false,
-        message: 'This user has an active booking. Complete or cancel active bookings before deleting.'
+        message: req.t('adminUserActiveBooking')
       });
     }
 
@@ -408,7 +408,7 @@ exports.deleteUser = async (req, res, next) => {
       details: { email: user.email }
     });
 
-    res.status(200).json({ success: true, message: 'User deleted successfully' });
+    res.status(200).json({ success: true, message: req.t('adminUserDeleted') });
   } catch (error) {
     next(error);
   }
@@ -423,18 +423,18 @@ exports.deleteWorker = async (req, res, next) => {
     }
 
     if (!workerProfile) {
-      return res.status(404).json({ success: false, message: 'Worker not found' });
+      return res.status(404).json({ success: false, message: req.t('adminWorkerNotFound') });
     }
 
     const workerUser = await User.findOne({ _id: workerProfile.user, role: 'worker' }).lean();
     if (!workerUser) {
-      return res.status(404).json({ success: false, message: 'Worker account not found' });
+      return res.status(404).json({ success: false, message: req.t('adminWorkerAccountNotFound') });
     }
 
     if (await hasActiveBookings(workerUser._id)) {
       return res.status(409).json({
         success: false,
-        message: 'This worker has an active booking. Complete or cancel active bookings before deleting.'
+        message: req.t('adminWorkerActiveBooking')
       });
     }
 
@@ -448,7 +448,7 @@ exports.deleteWorker = async (req, res, next) => {
       details: { user: workerUser._id, email: workerUser.email }
     });
 
-    res.status(200).json({ success: true, message: 'Worker deleted successfully' });
+    res.status(200).json({ success: true, message: req.t('adminWorkerDeleted') });
   } catch (error) {
     next(error);
   }
@@ -459,7 +459,7 @@ exports.approveWorker = async (req, res, next) => {
     const { workerId, status, rejectionReason, type } = req.body;
 
     if (!['approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ success: false, message: 'Invalid status' });
+      return res.status(400).json({ success: false, message: req.t('invalidStatus') });
     }
 
     let result;
@@ -495,7 +495,7 @@ exports.approveWorker = async (req, res, next) => {
     }
 
     if (!result) {
-       return res.status(404).json({ success: false, message: 'Identity record not found' });
+       return res.status(404).json({ success: false, message: req.t('identityNotFound') });
     }
 
     if (type === 'worker') {
@@ -507,10 +507,9 @@ exports.approveWorker = async (req, res, next) => {
       await createNotification({
         user: userId,
         type: 'system',
-        title: status === 'approved' ? 'Identity Verified' : 'Verification Rejected',
-        message: status === 'approved' 
-          ? 'Your account has been successfully verified. You now have full access to platform features.' 
-          : `Your verification request was declined. Reason: ${rejectionReason || 'Documents were unclear'}. Please re-upload your ID proof.`
+        titleKey: status === 'approved' ? 'identityVerifiedTitle' : 'verificationRejectedTitle',
+        messageKey: status === 'approved' ? 'identityVerifiedMessage' : 'verificationRejectedMessage',
+        messageParams: { reason: rejectionReason || req.t('documentsUnclear') }
       });
     } catch (notificationError) {
       console.error('Failed to send verification notification:', notificationError);
@@ -524,7 +523,7 @@ exports.approveWorker = async (req, res, next) => {
       details: { rejectionReason: rejectionReason || '' }
     });
 
-    res.status(200).json({ success: true, message: `Identity ${status} successfully`, data: result });
+    res.status(200).json({ success: true, message: req.t('identityStatusUpdated', { status }), data: result });
   } catch (error) {
     next(error);
   }

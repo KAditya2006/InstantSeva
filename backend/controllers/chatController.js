@@ -127,7 +127,7 @@ const emitMessageAndNotifyRecipients = async ({ req, chat, message, notification
       await createNotification({
         user: participantId,
         type: 'message',
-        title: 'New message',
+        titleKey: 'newMessageTitle',
         message: notificationText,
         entityType: 'Chat',
         entityId: chat._id
@@ -136,7 +136,7 @@ const emitMessageAndNotifyRecipients = async ({ req, chat, message, notification
         type: 'message',
         chatId,
         senderName: req.user.name,
-        text: message.messageType === 'image' ? 'Sent an image' : message.content
+        text: message.messageType === 'image' ? req.t('sentImage') : message.content
       });
     }));
 };
@@ -164,7 +164,7 @@ exports.getMessages = async (req, res, next) => {
     const { page, limit, skip } = getPagination(req.query);
     const chat = await findUserChat(chatId, req.user.id);
     if (!chat) {
-      return res.status(404).json({ success: false, message: 'Chat not found' });
+      return res.status(404).json({ success: false, message: req.t('chatNotFound') });
     }
 
     await markMessagesReadForChat({ req, chat });
@@ -191,12 +191,12 @@ exports.initiateChat = async (req, res, next) => {
     const { recipientId } = req.body;
 
     if (!recipientId || recipientId === req.user.id.toString()) {
-      return res.status(400).json({ success: false, message: 'A valid recipient is required' });
+      return res.status(400).json({ success: false, message: req.t('chatValidRecipientRequired') });
     }
 
     const recipient = await User.findById(recipientId);
     if (!recipient) {
-      return res.status(404).json({ success: false, message: 'Recipient not found' });
+      return res.status(404).json({ success: false, message: req.t('recipientNotFound') });
     }
 
     const allowed = await canInitiateChat({
@@ -208,7 +208,7 @@ exports.initiateChat = async (req, res, next) => {
     if (!allowed) {
       return res.status(403).json({
         success: false,
-        message: 'You can only start chats related to approved services or your assigned jobs'
+        message: req.t('chatRestricted')
       });
     }
     
@@ -235,12 +235,12 @@ exports.sendTextMessage = async (req, res, next) => {
     const content = String(req.body.content || '').trim();
 
     if (!content) {
-      return res.status(400).json({ success: false, message: 'Message cannot be empty' });
+      return res.status(400).json({ success: false, message: req.t('messageEmpty') });
     }
 
     const chat = await findUserChat(chatId, req.user.id);
     if (!chat) {
-      return res.status(404).json({ success: false, message: 'Chat not found' });
+      return res.status(404).json({ success: false, message: req.t('chatNotFound') });
     }
 
     const io = req.app.get('io');
@@ -284,12 +284,12 @@ exports.uploadImageMessage = async (req, res, next) => {
   try {
     const { chatId } = req.body;
     if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No image uploaded' });
+      return res.status(400).json({ success: false, message: req.t('imageRequiredForChat') });
     }
 
     const chat = await findUserChat(chatId, req.user.id);
     if (!chat) {
-      return res.status(404).json({ success: false, message: 'Chat not found' });
+      return res.status(404).json({ success: false, message: req.t('chatNotFound') });
     }
 
     const io = req.app.get('io');
@@ -309,7 +309,7 @@ exports.uploadImageMessage = async (req, res, next) => {
     // Update last message in chat
     await Chat.findByIdAndUpdate(chatId, {
       lastMessage: {
-        text: 'Sent an image',
+        text: req.t('sentImage'),
         sender: req.user.id,
         createdAt: new Date()
       }
@@ -320,7 +320,7 @@ exports.uploadImageMessage = async (req, res, next) => {
       req,
       chat,
       message: populatedMessage,
-      notificationText: `${req.user.name} sent an image`
+      notificationText: req.t('sentImageNotification', { name: req.user.name })
     });
 
     res.status(201).json({ success: true, data: populatedMessage });
@@ -334,7 +334,7 @@ exports.markChatRead = async (req, res, next) => {
     const { chatId } = req.params;
     const chat = await findUserChat(chatId, req.user.id);
     if (!chat) {
-      return res.status(404).json({ success: false, message: 'Chat not found' });
+      return res.status(404).json({ success: false, message: req.t('chatNotFound') });
     }
 
     const messages = await markMessagesReadForChat({ req, chat });

@@ -2,22 +2,36 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { sendPushNotificationToUser } = require('../services/pushNotificationService');
 const { normalizeLanguage } = require('./languages');
+const { tServer } = require('./serverI18n');
 
 const pickLocalizedText = (value, language) => {
   if (!value || typeof value === 'string') return value;
   return value[language] || value.en || Object.values(value)[0];
 };
 
-const createNotification = async ({ user, type = 'system', title, message, entityType, entityId }) => {
-  if (!user || !title || !message) return null;
+const createNotification = async ({
+  user,
+  type = 'system',
+  title,
+  titleKey,
+  titleParams,
+  message,
+  messageKey,
+  messageParams,
+  entityType,
+  entityId
+}) => {
+  if (!user || (!title && !titleKey) || (!message && !messageKey)) return null;
   const notificationUser = await User.findById(user).select('preferredLanguage').lean();
   const language = normalizeLanguage(notificationUser?.preferredLanguage);
+  const resolvedTitle = titleKey ? tServer(titleKey, language, titleParams) : pickLocalizedText(title, language);
+  const resolvedMessage = messageKey ? tServer(messageKey, language, messageParams) : pickLocalizedText(message, language);
 
   const notification = await Notification.create({
     user,
     type,
-    title: pickLocalizedText(title, language),
-    message: pickLocalizedText(message, language),
+    title: resolvedTitle,
+    message: resolvedMessage,
     language,
     entityType,
     entityId

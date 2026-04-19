@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getChats, getMessages, markChatRead, sendTextMessage, uploadImageMessage } from '../services/api';
@@ -54,6 +55,7 @@ const getMessageReceipt = (message, chat, userId) => {
 };
 
 const ChatPage = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const location = useLocation();
   const [chats, setChats] = useState([]);
@@ -132,11 +134,11 @@ const ChatPage = () => {
       setMessages(data.data);
       setMessagePagination(data.pagination);
     } catch {
-      toast.error('Failed to load messages');
+      toast.error(t('chat.failedLoadMessages'));
     } finally {
       setMsgLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const fetchChats = useCallback(async () => {
     try {
@@ -153,11 +155,11 @@ const ChatPage = () => {
         }
       }
     } catch {
-      toast.error('Failed to load chats');
+      toast.error(t('chat.failedLoadChats'));
     } finally {
       setLoading(false);
     }
-  }, [handleChatSelect, initialChatId, syncPresenceFromChats]);
+  }, [handleChatSelect, initialChatId, syncPresenceFromChats, t]);
 
   useEffect(() => {
     activeChatRef.current = activeChat;
@@ -232,7 +234,7 @@ const ChatPage = () => {
       setMessages((current) => [...data.data, ...current]);
       setMessagePagination(data.pagination);
     } catch {
-      toast.error('Failed to load older messages');
+      toast.error(t('chat.failedLoadOlder'));
     }
   };
 
@@ -249,7 +251,7 @@ const ChatPage = () => {
       fetchChats();
     } catch (error) {
       setText(content);
-      toast.error(error.response?.data?.message || 'Message was not saved. Please try again.');
+      toast.error(error.response?.data?.message || t('chat.messageNotSaved'));
     }
   };
 
@@ -257,7 +259,7 @@ const ChatPage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const toastId = toast.loading('Sending image...');
+    const toastId = toast.loading(t('chat.sendingImage'));
     const formData = new FormData();
     formData.append('image', file);
     formData.append('chatId', activeChat._id);
@@ -266,9 +268,9 @@ const ChatPage = () => {
       const { data } = await uploadImageMessage(formData);
       appendMessage(data.data);
       fetchChats();
-      toast.success('Image sent', { id: toastId });
+      toast.success(t('chat.imageSent'), { id: toastId });
     } catch {
-      toast.error('Failed to send image', { id: toastId });
+      toast.error(t('chat.failedSendImage'), { id: toastId });
     }
   };
 
@@ -281,17 +283,17 @@ const ChatPage = () => {
     const receipt = getMessageReceipt(message, activeChat, user.id);
 
     if (receipt === 'read') {
-      return <CheckCheck size={14} className="text-emerald-500" title="Read" />;
+      return <CheckCheck size={14} className="text-emerald-500" title={t('chat.read')} />;
     }
 
     if (receipt === 'delivered') {
-      return <CheckCheck size={14} className="text-slate-400" title="Delivered" />;
+      return <CheckCheck size={14} className="text-slate-400" title={t('chat.delivered')} />;
     }
 
-    return <Check size={14} className="text-slate-400" title="Sent" />;
+    return <Check size={14} className="text-slate-400" title={t('chat.sent')} />;
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-400">Loading your conversations...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-400">{t('chat.loadingConversations')}</div>;
 
   return (
     <div className="min-h-screen md:h-screen flex flex-col bg-slate-50 md:overflow-hidden">
@@ -301,10 +303,10 @@ const ChatPage = () => {
         {/* Chat List */}
         <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[380px] bg-white rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100 flex-col overflow-hidden min-h-[60vh] md:min-h-0`}>
           <div className="p-4 sm:p-8 border-b border-slate-50">
-            <h1 className="text-2xl font-bold font-heading text-slate-900 mb-6">Messages</h1>
+            <h1 className="text-2xl font-bold font-heading text-slate-900 mb-6">{t('chat.messages')}</h1>
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search conversations..." className="w-full bg-slate-50 border border-slate-100 pl-11 pr-4 py-3.5 rounded-2xl outline-none focus:border-primary-500 focus:bg-white transition-all text-sm font-medium" />
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder={t('chat.searchConversations')} className="w-full bg-slate-50 border border-slate-100 pl-11 pr-4 py-3.5 rounded-2xl outline-none focus:border-primary-500 focus:bg-white transition-all text-sm font-medium" />
             </div>
           </div>
 
@@ -324,7 +326,7 @@ const ChatPage = () => {
                   <img
                     src={otherParticipant?.avatar || fallbackAvatar}
                     onError={withImageFallback()}
-                    alt="User" 
+                    alt={t('chat.participantAvatar')} 
                     className="w-14 h-14 rounded-2xl object-cover border-2 border-white premium-shadow"
                   />
                   <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${getPresenceDotClass(otherParticipantOnline)} border-2 border-white rounded-full`}></div>
@@ -339,14 +341,14 @@ const ChatPage = () => {
                     </span>
                   </div>
                   <p className="text-sm font-medium text-slate-500 truncate italic">
-                    {chat.lastMessage?.text || 'Start a conversation'}
+                    {chat.lastMessage?.text || t('chat.startConversation')}
                   </p>
                 </div>
               </div>
                 );
               })()
             )) : (
-            <div className="p-8 sm:p-12 text-center text-slate-400 font-bold italic">No messages yet</div>
+            <div className="p-8 sm:p-12 text-center text-slate-400 font-bold italic">{t('chat.noMessages')}</div>
             )}
           </div>
         </div>
@@ -363,18 +365,18 @@ const ChatPage = () => {
               {/* Window Header */}
               <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-50 flex justify-between items-center gap-3 bg-white/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-4">
-                  <button onClick={() => setActiveChat(null)} className="md:hidden text-slate-400 font-bold text-xl">Back</button>
+                  <button onClick={() => setActiveChat(null)} className="md:hidden text-slate-400 font-bold text-xl">{t('chat.back')}</button>
                   <img
                     src={activeParticipant?.avatar || fallbackAvatar}
                     onError={withImageFallback()}
                     className="w-12 h-12 rounded-2xl object-cover" 
-                    alt="Active" 
+                    alt={t('chat.activeAvatar')} 
                   />
                   <div>
                     <h3 className="font-bold text-slate-900 text-base sm:text-lg truncate max-w-[150px] sm:max-w-none">{activeParticipant?.name}</h3>
                     <div className="flex items-center gap-2">
                        <div className={`w-2 h-2 ${getPresenceDotClass(activeParticipantOnline)} rounded-full ${activeParticipantOnline ? 'animate-pulse' : ''}`}></div>
-                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{activeParticipantOnline ? 'Active Now' : 'Offline'}</span>
+                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{activeParticipantOnline ? t('chat.activeNow') : t('chat.offline')}</span>
                     </div>
                   </div>
                 </div>
@@ -391,12 +393,12 @@ const ChatPage = () => {
                 ) : (
                   <>
                     <div className="text-center mb-12">
-                       <span className="px-4 py-1.5 bg-white border border-slate-100 rounded-full text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] premium-shadow">Today</span>
+                       <span className="px-4 py-1.5 bg-white border border-slate-100 rounded-full text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] premium-shadow">{t('chat.today')}</span>
                     </div>
                     {messagePagination.page < messagePagination.pages && (
                       <div className="text-center">
                         <button onClick={loadOlderMessages} className="px-4 py-2 bg-white border border-slate-100 rounded-xl text-xs font-bold text-slate-500">
-                          Load older messages
+                          {t('chat.loadOlder')}
                         </button>
                       </div>
                     )}
@@ -407,7 +409,7 @@ const ChatPage = () => {
                         <div className={`max-w-[86%] sm:max-w-[70%] space-y-2 ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                           <div className={`p-3 sm:p-4 rounded-2xl sm:rounded-[28px] premium-shadow font-medium tracking-tight break-words ${isOwnMessage ? 'bg-primary-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'}`}>
                              {msg.messageType === 'image' ? (
-                               <img src={msg.imageUrl} className="max-w-full rounded-2xl cursor-pointer" alt="Sent" onClick={() => window.open(msg.imageUrl, '_blank')} />
+                               <img src={msg.imageUrl} className="max-w-full rounded-2xl cursor-pointer" alt={t('chat.sentImage')} onClick={() => window.open(msg.imageUrl, '_blank')} />
                              ) : msg.content}
                           </div>
                           <div className={`flex items-center gap-2 px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest`}>
@@ -431,7 +433,7 @@ const ChatPage = () => {
                     </label>
                     <input 
                       type="text" 
-                      placeholder="Write your message..." 
+                      placeholder={t('chat.writeMessage')} 
                       className="flex-1 bg-transparent outline-none px-4 py-2 font-medium text-slate-900"
                       value={text}
                       onChange={(e) => setText(e.target.value)}
@@ -449,8 +451,8 @@ const ChatPage = () => {
                <div className="w-24 h-24 bg-primary-50 rounded-[40px] flex items-center justify-center mb-8 text-primary-600 shadow-xl shadow-primary-100/50">
                   <MessageSquare size={48} />
                </div>
-               <h3 className="text-3xl font-bold font-heading text-slate-900 mb-2">Select a Conversation</h3>
-               <p className="text-slate-500 font-medium max-w-xs">Connect with experts and residents from your marketplace in real-time.</p>
+               <h3 className="text-3xl font-bold font-heading text-slate-900 mb-2">{t('chat.selectConversation')}</h3>
+               <p className="text-slate-500 font-medium max-w-xs">{t('chat.selectConversationHint')}</p>
             </div>
           )}
         </div>

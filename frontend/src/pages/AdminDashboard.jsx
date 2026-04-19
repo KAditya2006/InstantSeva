@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { approveWorker, createAdminUser, createAdminWorker, deleteAdminUser, deleteAdminWorker, getAdminBookings, getAdminStats, getAdminUsers, getAdminWorkers, getAuditLogs, getPendingWorkers } from '../services/api';
 import Navbar from '../components/Navbar';
 import { ShieldAlert, Users, CheckCircle, XCircle, Eye, Search, TrendingUp, Clock, Briefcase, CalendarDays, Plus, Trash2 } from 'lucide-react';
@@ -48,6 +49,7 @@ const StatusBadge = ({ children, status }) => (
 );
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [pendingWorkers, setPendingWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -71,12 +73,10 @@ const AdminDashboard = () => {
   const [createModal, setCreateModal] = useState(null);
   const [createForm, setCreateForm] = useState(EMPTY_MANAGED_ACCOUNT_FORM);
   const [creatingAccount, setCreatingAccount] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [statsRes, workersRes] = await Promise.all([
         getAdminStats(),
@@ -87,11 +87,15 @@ const AdminDashboard = () => {
       const logsRes = await getAuditLogs();
       setAuditLogs(logsRes.data.data);
     } catch {
-      toast.error('Failed to load admin data');
+      toast.error(t('admin.failedLoadData'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     if (!LIST_TABS.includes(activeTab)) return;
@@ -108,7 +112,7 @@ const AdminDashboard = () => {
         setDirectories((current) => ({ ...current, [activeTab]: data.data }));
         setDirectoryPagination((current) => ({ ...current, [activeTab]: data.pagination }));
       } catch {
-        toast.error('Failed to load admin list');
+        toast.error(t('admin.failedLoadList'));
       } finally {
         setDirectoryLoading(false);
       }
@@ -116,7 +120,7 @@ const AdminDashboard = () => {
 
     setDirectorySearch('');
     fetchInitialDirectory();
-  }, [activeTab]);
+  }, [activeTab, t]);
 
   const fetchDirectory = async (tab = activeTab, page = 1, search = directorySearch) => {
     if (!LIST_TABS.includes(tab)) return;
@@ -128,7 +132,7 @@ const AdminDashboard = () => {
       setDirectories((current) => ({ ...current, [tab]: data.data }));
       setDirectoryPagination((current) => ({ ...current, [tab]: data.pagination }));
     } catch {
-      toast.error('Failed to load admin list');
+      toast.error(t('admin.failedLoadList'));
     } finally {
       setDirectoryLoading(false);
     }
@@ -174,20 +178,28 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteAccount = async ({ tab, id, name }) => {
-    const label = tab === 'users' ? 'user' : 'worker';
-    const confirmed = window.confirm(`Delete ${name || `this ${label}`}? This cannot be undone.`);
-    if (!confirmed) return;
+    setPendingDelete({ tab, id, name });
+  };
 
+  const confirmDeleteAccount = async () => {
+    if (!pendingDelete) return;
+    const { tab, id } = pendingDelete;
+    const label = tab === 'users' ? 'user' : 'worker';
+
+    setDeletingAccount(true);
     try {
       const { data } = tab === 'users'
         ? await deleteAdminUser(id)
         : await deleteAdminWorker(id);
 
       toast.success(data.message);
+      setPendingDelete(null);
       await fetchData();
       await fetchDirectory(tab, directoryPagination[tab]?.page || 1, directorySearch);
     } catch (error) {
-      toast.error(error.response?.data?.message || `Could not delete ${label}`);
+      toast.error(error.response?.data?.message || t('admin.deleteFailed', { label }));
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -444,6 +456,15 @@ const AdminDashboard = () => {
             onClose={() => setCreateModal(null)}
           />
         )}
+
+        {pendingDelete && (
+          <DeleteAccountModal
+            item={pendingDelete}
+            saving={deletingAccount}
+            onCancel={() => setPendingDelete(null)}
+            onConfirm={confirmDeleteAccount}
+          />
+        )}
       </div>
     </div>
   );
@@ -661,6 +682,64 @@ const EmptyTable = ({ colSpan, message }) => (
     <td colSpan={colSpan} className="px-8 py-20 text-center text-slate-300 font-bold italic">{message}</td>
   </tr>
 );
+
+const DeleteAccountModal = ({ item, saving, onCancel, onConfirm }) => {
+  const { t } = useTranslation();
+  const [confirmation, setConfirmation] = useState('');
+  const label = item.tab === 'users' ? t('admin.user') : t('admin.worker');
+  const targetName = item.name || t('admin.thisAccount', { label });
+  const canConfirm = confirmation.trim().toUpperCase() === 'DELETE';
+
+  return (
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl">
+        <div className="mb-5 flex items-start gap-4">
+          <div className="rounded-lg bg-rose-50 p-3 text-rose-600">
+            <Trash2 size={24} />
+          </div>
+          <div>
+            <h3 className="font-heading text-2xl font-bold text-slate-900">
+              {t('admin.deleteTitle', { label })}
+            </h3>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              {t('admin.deleteWarning', { name: targetName })}
+            </p>
+          </div>
+        </div>
+
+        <label className="block text-xs font-black uppercase tracking-widest text-slate-400">
+          {t('admin.typeDelete')}
+        </label>
+        <input
+          autoFocus
+          value={confirmation}
+          onChange={(event) => setConfirmation(event.target.value)}
+          placeholder="DELETE"
+          className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 font-bold text-slate-900 outline-none focus:border-rose-400 focus:bg-white"
+        />
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="flex-1 rounded-lg border border-slate-200 px-4 py-3 font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={!canConfirm || saving}
+            className="flex-1 rounded-lg bg-rose-600 px-4 py-3 font-bold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {saving ? t('admin.deleting') : t('admin.confirmDelete')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ManagedAccountModal = ({ type, form, setForm, saving, onSubmit, onClose }) => {
   const isWorker = type === 'workers';
