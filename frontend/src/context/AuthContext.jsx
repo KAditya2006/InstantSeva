@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useContext, useState, useEffect } from 'react';
 import { getCurrentUser, setAuthToken } from '../services/api';
+import i18n from '../i18n';
+import { LANGUAGE_STORAGE_KEY } from '../i18n/languages';
 
 const AuthContext = createContext();
 
@@ -71,6 +73,10 @@ export const AuthProvider = ({ children }) => {
     setToken(userToken);
     localStorage.setItem('token', userToken);
     setAuthToken(userToken);
+
+    if (userData?.preferredLanguage && !localStorage.getItem(LANGUAGE_STORAGE_KEY)) {
+      i18n.changeLanguage(userData.preferredLanguage);
+    }
   };
 
   const logout = () => {

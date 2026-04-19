@@ -6,6 +6,7 @@ import AddressAutocomplete from '../components/AddressAutocomplete';
 import toast from 'react-hot-toast';
 import BrandLogo from '../components/BrandLogo';
 import { PROFESSIONS } from '../constants/professions';
+import { useTranslation } from 'react-i18next';
 
 const toStoredCoordinates = (coordinates) => {
   if (!Array.isArray(coordinates) || coordinates.length < 2) return undefined;
@@ -29,19 +30,20 @@ const Signup = () => {
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await registerUser(formData);
+      const { data } = await registerUser({ ...formData, preferredLanguage: i18n.resolvedLanguage || i18n.language });
       if (data.success) {
         toast.success(data.message);
         navigate('/verify-otp', { state: { email: formData.email } });
       }
     } catch (error) {
       console.error('Registration error detail:', error);
-      const msg = error.response?.data?.message || error.message || 'Registration failed';
+      const msg = error.response?.data?.message || error.message || t('auth.registrationFailed');
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -59,21 +61,21 @@ const Signup = () => {
           </Link>
           <div className="mt-24 max-w-lg">
             <h2 className="text-4xl xl:text-5xl font-bold text-white font-heading leading-tight mb-6">
-              Empowering local experts to grow.
+              {t('auth.createAccount')}
             </h2>
             <p className="text-primary-100 text-xl leading-relaxed">
-              Join thousands of workers who have found success through our platform. Secure, reliable, and built for you.
+              {t('auth.joinText')}
             </p>
           </div>
         </div>
         <div className="relative z-10 flex gap-8">
           <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
             <h4 className="text-white font-bold text-2xl">5000+</h4>
-            <p className="text-primary-100/80 text-sm">Verified Workers</p>
+            <p className="text-primary-100/80 text-sm">{t('home.verifiedPros')}</p>
           </div>
           <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
             <h4 className="text-white font-bold text-2xl">10k+</h4>
-            <p className="text-primary-100/80 text-sm">Happy Customers</p>
+            <p className="text-primary-100/80 text-sm">{t('dashboard.customerDashboard')}</p>
           </div>
         </div>
       </div>
@@ -82,8 +84,8 @@ const Signup = () => {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-12">
         <div className="w-full max-w-md">
           <div className="mb-8 sm:mb-10 text-center lg:text-left">
-            <h3 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mb-2">Create an Account</h3>
-            <p className="text-slate-500">Join InstantSeva and discover talented pros.</p>
+            <h3 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mb-2">{t('auth.createAccount')}</h3>
+            <p className="text-slate-500">{t('auth.joinText')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -93,14 +95,14 @@ const Signup = () => {
                 onClick={() => setFormData({...formData, role: 'user'})}
                 className={`py-2 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${formData.role === 'user' ? 'bg-primary-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
               >
-                I'm a Customer
+                {t('auth.customerRole')}
               </button>
               <button 
                 type="button"
                 onClick={() => setFormData({...formData, role: 'worker'})}
                 className={`py-2 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${formData.role === 'worker' ? 'bg-primary-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
               >
-                I'm a Worker
+                {t('auth.workerRole')}
               </button>
             </div>
 
@@ -109,7 +111,7 @@ const Signup = () => {
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Full Name" 
+                  placeholder={t('auth.fullName')}
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -120,7 +122,7 @@ const Signup = () => {
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                   type="email" 
-                  placeholder="Email Address" 
+                  placeholder={t('auth.email')}
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -131,7 +133,7 @@ const Signup = () => {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                   type="password" 
-                  placeholder="Password" 
+                  placeholder={t('auth.password')}
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -142,7 +144,7 @@ const Signup = () => {
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                   type="tel" 
-                  placeholder="Phone Number (Required for bookings)" 
+                  placeholder={t('auth.phone')}
                   required
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -159,7 +161,7 @@ const Signup = () => {
                       address,
                       location: { ...formData.location, coordinates: toStoredCoordinates(coordinates) }
                     })}
-                    placeholder="Search your location or enter manually..."
+                    placeholder={t('auth.location')}
                   />
                 </div>
               </div>
@@ -169,7 +171,7 @@ const Signup = () => {
                   <Home className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input 
                     type="text" 
-                    placeholder="Home Number (e.g., Apt 4B, House 12)" 
+                    placeholder={t('auth.homeNumber')}
                     required={formData.role === 'user'}
                     value={formData.homeNumber}
                     onChange={(e) => setFormData({...formData, homeNumber: e.target.value})}
@@ -182,7 +184,7 @@ const Signup = () => {
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                      <Briefcase size={16} /> Choose Your Professions
+                      <Briefcase size={16} /> {t('auth.chooseProfessions')}
                     </label>
                     <div className="flex flex-wrap gap-2 p-3 bg-white border border-slate-200 rounded-xl max-h-48 overflow-y-auto">
                       {PROFESSIONS.map((prof) => {
@@ -203,13 +205,13 @@ const Signup = () => {
                                 : 'bg-slate-50 text-slate-600 border-slate-100 hover:border-primary-300 hover:bg-white'
                             }`}
                           >
-                            {prof.charAt(0).toUpperCase() + prof.slice(1)}
+                            {t(`services.${prof}`, { defaultValue: prof.charAt(0).toUpperCase() + prof.slice(1) })}
                           </button>
                         );
                       })}
                     </div>
                     {formData.professions.length === 0 && (
-                      <p className="text-[10px] text-rose-500 font-bold ml-1">Please select at least one profession</p>
+                      <p className="text-[10px] text-rose-500 font-bold ml-1">{t('auth.selectProfession')}</p>
                     )}
                   </div>
                   
@@ -218,7 +220,7 @@ const Signup = () => {
                       <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 
                         type="number" 
-                        placeholder="Years Exp." 
+                        placeholder={t('auth.experience')}
                         required={formData.role === 'worker'}
                         value={formData.experience}
                         onChange={(e) => setFormData({...formData, experience: e.target.value})}
@@ -229,7 +231,7 @@ const Signup = () => {
 
                   <div className="relative">
                     <textarea 
-                      placeholder="Tell us about your services..." 
+                      placeholder={t('auth.bio')}
                       required={formData.role === 'worker'}
                       value={formData.bio}
                       onChange={(e) => setFormData({...formData, bio: e.target.value})}
@@ -246,16 +248,16 @@ const Signup = () => {
               disabled={loading}
               className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 group"
             >
-              {loading ? 'Creating Account...' : (
+              {loading ? t('auth.creatingAccount') : (
                 <>
-                  Register Now <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  {t('auth.registerNow')} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
           <p className="mt-8 text-center text-slate-500">
-            Already have an account? <Link to="/login" className="text-primary-600 font-bold hover:underline">Log in</Link>
+            {t('auth.alreadyAccount')} <Link to="/login" className="text-primary-600 font-bold hover:underline">{t('auth.logIn')}</Link>
           </p>
         </div>
       </div>

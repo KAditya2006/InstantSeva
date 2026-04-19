@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, ArrowLeft, RefreshCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getPostAuthRedirect } from '../utils/onboarding';
+import { useTranslation } from 'react-i18next';
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -13,6 +14,7 @@ const VerifyOTP = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useTranslation();
   
   const email = location.state?.email;
 
@@ -51,7 +53,7 @@ const VerifyOTP = () => {
     e.preventDefault();
     const otpCode = otp.join('');
     if (otpCode.length !== 6) {
-      toast.error('Please enter complete 6-digit OTP');
+      toast.error(t('auth.completeOtp'));
       return;
     }
 
@@ -59,14 +61,14 @@ const VerifyOTP = () => {
     try {
       const { data } = await verifyOTP({ email, otp: otpCode });
       if (data.success) {
-        toast.success('Email verified successfully!');
+        toast.success(t('auth.emailVerifiedToast'));
         login(data.user, data.token);
         
         const redirectPath = getPostAuthRedirect(data.user);
         navigate(redirectPath, { state: redirectPath === '/profile' ? { onboarding: true } : undefined });
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid OTP');
+      toast.error(error.response?.data?.message || t('dashboard.invalidOtp'));
     } finally {
       setLoading(false);
     }
@@ -76,11 +78,11 @@ const VerifyOTP = () => {
     if (timer > 0) return;
     try {
       await resendOTP({ email });
-      toast.success('OTP sent again');
+      toast.success(t('auth.otpSentAgain'));
       setTimer(60);
       setOtp(['', '', '', '', '', '']);
     } catch {
-      toast.error('Failed to resend OTP');
+      toast.error(t('auth.failedResend'));
     }
   };
 
@@ -88,15 +90,15 @@ const VerifyOTP = () => {
     <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">
       <div className="max-w-md w-full">
         <button onClick={() => navigate('/signup')} className="mb-8 sm:mb-12 flex items-center gap-2 text-slate-500 hover:text-primary-600 transition-colors font-medium">
-          <ArrowLeft size={18} /> Back to Signup
+          <ArrowLeft size={18} /> {t('auth.backToSignup')}
         </button>
 
         <div className="text-center mb-10">
           <div className="w-20 h-20 bg-primary-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-primary-600">
             <ShieldCheck size={40} />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mb-2">Verify your Email</h1>
-          <p className="text-slate-500 break-words">We've sent a 6-digit code to <span className="text-slate-900 font-semibold">{email}</span></p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mb-2">{t('auth.verifyEmail')}</h1>
+          <p className="text-slate-500 break-words">{t('auth.otpSent')} <span className="text-slate-900 font-semibold">{email}</span></p>
         </div>
 
         <form onSubmit={handleVerify} className="space-y-8 sm:space-y-10">
@@ -120,19 +122,19 @@ const VerifyOTP = () => {
             disabled={loading}
             className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-bold transition-all premium-shadow disabled:opacity-50"
           >
-            {loading ? 'Verifying...' : 'Verify & Continue'}
+            {loading ? t('auth.verifying') : t('auth.verifyContinue')}
           </button>
         </form>
 
         <div className="mt-12 text-center">
-          <p className="text-slate-500 mb-4">Didn't receive code?</p>
+          <p className="text-slate-500 mb-4">{t('auth.didNotReceive')}</p>
           <button 
             onClick={handleResend}
             disabled={timer > 0}
             className={`flex items-center gap-2 mx-auto font-bold transition-colors ${timer > 0 ? 'text-slate-300' : 'text-primary-600 hover:text-primary-700'}`}
           >
             <RefreshCcw size={18} className={timer > 0 ? '' : 'animate-spin-slow'} />
-            {timer > 0 ? `Resend code in ${timer}s` : 'Resend Code Now'}
+            {timer > 0 ? t('auth.resendIn', { seconds: timer }) : t('auth.resendNow')}
           </button>
         </div>
       </div>

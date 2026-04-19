@@ -7,6 +7,7 @@ import { AlertCircle, CalendarDays, CheckCircle2, Clock, XCircle, ShieldCheck, M
 import toast from 'react-hot-toast';
 import { fallbackAvatar, withImageFallback } from '../utils/images';
 import { getDashboardPath, getOnboardingMessage, getVerificationSource } from '../utils/onboarding';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Profile = () => {
   const { user, setUser } = useAuth();
@@ -111,6 +112,7 @@ const Profile = () => {
           >
             Edit Profile
           </button>
+          <LanguageSwitcher />
         </section>
 
         {user?.role !== 'admin' && (

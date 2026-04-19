@@ -28,10 +28,13 @@ import {
 import TrackingMap from '../components/TrackingMap';
 import BookingDetailsModal from '../components/BookingDetailsModal';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { formatInr } from '../utils/formatters';
 import { CATEGORY_METADATA, PROFESSIONS } from '../constants/professions';
 import { getBookingDestination } from '../utils/location';
+import VoiceSearchButton from '../components/VoiceSearchButton';
+import { normalizeServiceSearch } from '../utils/multilingualSearch';
 
 const ICON_MAP = {
   BookOpen,
@@ -94,6 +97,7 @@ const statusStyles = {
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewForms, setReviewForms] = useState({});
@@ -103,12 +107,12 @@ const Dashboard = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
 
   const openServiceSearch = (service) => {
-    navigate(`/search?q=${encodeURIComponent(service)}`);
+    navigate(`/search?q=${encodeURIComponent(normalizeServiceSearch(service))}`);
   };
 
   const handleServiceSearch = (e) => {
     e.preventDefault();
-    const query = serviceQuery.trim();
+    const query = normalizeServiceSearch(serviceQuery.trim());
     navigate(`/search${query ? `?q=${encodeURIComponent(query)}` : ''}`);
   };
 
@@ -118,11 +122,11 @@ const Dashboard = () => {
       setBookings(data.data);
       setPagination(data.pagination);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not load dashboard');
+      toast.error(error.response?.data?.message || t('dashboard.couldNotLoad'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchBookings();
@@ -131,43 +135,43 @@ const Dashboard = () => {
   const changeStatus = async (bookingId, status) => {
     try {
       await updateBookingStatus(bookingId, status);
-      toast.success('Booking updated');
+      toast.success(t('dashboard.bookingUpdated'));
       fetchBookings(pagination.page);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not update booking');
+      toast.error(error.response?.data?.message || t('dashboard.couldNotUpdateBooking'));
     }
   };
 
   const changePayment = async (bookingId, paymentStatus) => {
     try {
       await updateBookingPayment(bookingId, { paymentStatus, paymentMethod: 'manual' });
-      toast.success('Payment updated');
+      toast.success(t('dashboard.paymentUpdated'));
       fetchBookings(pagination.page);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not update payment');
+      toast.error(error.response?.data?.message || t('dashboard.couldNotUpdatePayment'));
     }
   };
 
   const handleStartVerify = async (bookingId) => {
     try {
-      if (!otpInput[bookingId]) return toast.error('Please enter OTP');
+      if (!otpInput[bookingId]) return toast.error(t('dashboard.pleaseEnterOtp'));
       await verifyStartOTP(bookingId, otpInput[bookingId]);
-      toast.success('Job started');
+      toast.success(t('dashboard.jobStarted'));
       fetchBookings(pagination.page);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid OTP');
+      toast.error(error.response?.data?.message || t('dashboard.invalidOtp'));
     }
   };
 
   const submitReview = async (bookingId) => {
     try {
       const form = reviewForms[bookingId];
-      if (!form?.rating) return toast.error('Please select a rating');
+      if (!form?.rating) return toast.error(t('dashboard.pleaseSelectRating'));
       await createReview(bookingId, { rating: form.rating, comment: form.comment });
-      toast.success('Review submitted');
+      toast.success(t('dashboard.reviewSubmitted'));
       fetchBookings(pagination.page);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not submit review');
+      toast.error(error.response?.data?.message || t('dashboard.couldNotSubmitReview'));
     }
   };
 
@@ -176,17 +180,17 @@ const Dashboard = () => {
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
         <header className="bg-white rounded-3xl border border-slate-100 premium-shadow p-5 sm:p-8">
-          <p className="text-sm font-bold uppercase tracking-widest text-primary-600">Customer Dashboard</p>
-          <h1 className="text-3xl sm:text-4xl font-bold font-heading text-slate-900 mt-2">Your service activity</h1>
-          <p className="text-slate-500 font-medium mt-2">Track bookings, verify service OTPs, update payments, and review completed jobs.</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-primary-600">{t('dashboard.customerDashboard')}</p>
+          <h1 className="text-3xl sm:text-4xl font-bold font-heading text-slate-900 mt-2">{t('dashboard.serviceActivity')}</h1>
+          <p className="text-slate-500 font-medium mt-2">{t('dashboard.activitySubtitle')}</p>
         </header>
 
         <section className="bg-white rounded-3xl border border-slate-100 premium-shadow p-5 sm:p-8 space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
             <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-primary-600">Book A Service</p>
-              <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mt-2">What do you need today?</h2>
-              <p className="text-slate-500 font-medium mt-2">Choose a service and compare verified local experts before sending a booking request.</p>
+              <p className="text-sm font-bold uppercase tracking-widest text-primary-600">{t('dashboard.bookService')}</p>
+              <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mt-2">{t('dashboard.needToday')}</h2>
+              <p className="text-slate-500 font-medium mt-2">{t('dashboard.compareExperts')}</p>
             </div>
             <form onSubmit={handleServiceSearch} className="w-full lg:max-w-md bg-slate-50 rounded-2xl border border-slate-100 p-2 flex flex-col sm:flex-row gap-2">
               <div className="flex items-center gap-3 flex-1 px-3">
@@ -194,12 +198,16 @@ const Dashboard = () => {
                 <input
                   value={serviceQuery}
                   onChange={(e) => setServiceQuery(e.target.value)}
-                  placeholder="Search plumber, tutor, cleaner..."
+                  placeholder={t('dashboard.serviceSearchPlaceholder')}
                   className="w-full min-w-0 bg-transparent py-3 outline-none font-medium"
                 />
               </div>
+              <VoiceSearchButton
+                onTranscript={(text) => setServiceQuery(text)}
+                speakText={t('voice.searchingFor', { text: serviceQuery || t('dashboard.serviceSearchPlaceholder') })}
+              />
               <button className="px-5 py-3 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 transition-colors">
-                Search
+                {t('common.search')}
               </button>
             </form>
           </div>
@@ -216,7 +224,7 @@ const Dashboard = () => {
                   {React.createElement(Icon, { size: 24, className: iconColor })}
                 </span>
                 <span className="flex items-end justify-between gap-2">
-                  <span className="text-sm font-black text-slate-800 leading-snug">{label}</span>
+                  <span className="text-sm font-black text-slate-800 leading-snug">{t(`services.${name}`, { defaultValue: label })}</span>
                   <ArrowRight size={16} className="text-slate-400 shrink-0" />
                 </span>
               </button>
@@ -227,15 +235,15 @@ const Dashboard = () => {
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <CalendarDays className="text-primary-600" />
-            <h2 className="text-2xl font-bold font-heading text-slate-900">Bookings</h2>
+            <h2 className="text-2xl font-bold font-heading text-slate-900">{t('common.bookings')}</h2>
           </div>
 
           {loading ? (
-            <div className="bg-white rounded-3xl p-8 sm:p-12 text-center text-slate-400 font-bold">Loading dashboard...</div>
+            <div className="bg-white rounded-3xl p-8 sm:p-12 text-center text-slate-400 font-bold">{t('dashboard.loadingDashboard')}</div>
           ) : bookings.length === 0 ? (
             <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-100">
-              <p className="font-bold text-slate-700">No bookings yet.</p>
-              <p className="text-slate-400 mt-2">Your service requests will appear here.</p>
+              <p className="font-bold text-slate-700">{t('dashboard.noBookings')}</p>
+              <p className="text-slate-400 mt-2">{t('dashboard.requestsAppear')}</p>
             </div>
           ) : bookings.map((booking) => {
             const otherPerson = user?.role === 'worker' ? booking.user : booking.worker;
@@ -251,18 +259,18 @@ const Dashboard = () => {
                     <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words">{booking.service}</h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${statusStyles[booking.status] || statusStyles.pending}`}>{booking.status}</span>
                   </div>
-                  <p className="text-slate-500 break-words">With {otherPerson?.name} at {booking.address}</p>
+                  <p className="text-slate-500 break-words">{t('dashboard.withAt', { name: otherPerson?.name, address: booking.address })}</p>
                   {otherPerson?.phone && (
                     <div className="flex items-center gap-2 text-primary-600 font-bold text-sm bg-primary-50/50 w-fit px-3 py-1.5 rounded-lg border border-primary-100 mt-1">
                       <Phone size={14} />
-                      <span>Contact: {otherPerson.phone}</span>
+                      <span>{t('dashboard.contact', { phone: otherPerson.phone })}</span>
                     </div>
                   )}
                   <p className="flex items-start gap-2 text-sm font-bold text-slate-500">
                     <Clock size={16} className="mt-0.5 shrink-0" /> <span>{format(new Date(booking.scheduledDate), 'PPp')}</span>
                   </p>
                   <p className="text-sm font-bold text-slate-500">
-                    {formatInr(booking.totalPrice)} - Payment {booking.paymentStatus}
+                    {formatInr(booking.totalPrice)} - {t('dashboard.payment', { status: t(`status.${booking.paymentStatus}`, { defaultValue: booking.paymentStatus }) })}
                   </p>
                   {booking.additionalNotes && <p className="text-slate-600">{booking.additionalNotes}</p>}
 
@@ -270,13 +278,13 @@ const Dashboard = () => {
                     <div className="mt-4" onClick={(event) => event.stopPropagation()}>
                       <div className="flex items-center gap-2 mb-2 text-sm font-bold text-slate-900">
                         <MapPin size={16} className="text-primary-600" />
-                        <span>Live Worker Tracking</span>
+                        <span>{t('dashboard.liveTracking')}</span>
                       </div>
                       <TrackingMap
                         bookingId={booking._id}
                         destinationLocation={destinationLocation}
                         destinationAddress={booking.address}
-                        destinationLabel="Service Destination"
+                        destinationLabel={t('dashboard.destination')}
                       />
                     </div>
                   )}
@@ -288,28 +296,28 @@ const Dashboard = () => {
                       <div className="relative">
                         <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
-                          placeholder="Worker OTP"
+                          placeholder={t('dashboard.workerOtp')}
                           className="pl-10 pr-4 py-2 rounded-xl border border-slate-200 outline-none w-36 font-bold"
                           value={otpInput[booking._id] || ''}
                           onChange={(e) => setOtpInput({ ...otpInput, [booking._id]: e.target.value })}
                         />
                       </div>
-                      <button onClick={() => handleStartVerify(booking._id)} className="px-6 py-2 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 transition-all">Verify & Start</button>
+                      <button onClick={() => handleStartVerify(booking._id)} className="px-6 py-2 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 transition-all">{t('dashboard.verifyStart')}</button>
                     </div>
                   )}
 
                   {booking.status === 'in_progress' && (
                     <div className="bg-emerald-50 px-4 py-2 rounded-xl text-center border border-emerald-100">
-                      <p className="text-[10px] font-bold text-emerald-500 uppercase">Tell Worker this OTP</p>
+                      <p className="text-[10px] font-bold text-emerald-500 uppercase">{t('dashboard.tellWorkerOtp')}</p>
                       <p className="text-xl font-black text-emerald-700 tracking-widest">{booking.completionOTP}</p>
                     </div>
                   )}
 
                   {['pending', 'accepted'].includes(booking.status) && (
-                    <button onClick={() => changeStatus(booking._id, 'cancelled')} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold">Cancel</button>
+                    <button onClick={() => changeStatus(booking._id, 'cancelled')} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold">{t('common.cancel')}</button>
                   )}
                   {booking.paymentStatus !== 'paid' && ['accepted', 'completed'].includes(booking.status) && (
-                    <button onClick={() => changePayment(booking._id, 'paid')} className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold">Mark Paid</button>
+                    <button onClick={() => changePayment(booking._id, 'paid')} className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold">{t('dashboard.markPaid')}</button>
                   )}
                 </div>
 
@@ -318,13 +326,13 @@ const Dashboard = () => {
                     <select value={reviewForms[booking._id]?.rating || 5} onChange={(e) => setReviewForms({ ...reviewForms, [booking._id]: { ...reviewForms[booking._id], rating: Number(e.target.value) } })} className="bg-slate-50 rounded-xl px-3 py-2 outline-none">
                       {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}
                     </select>
-                    <input value={reviewForms[booking._id]?.comment || ''} onChange={(e) => setReviewForms({ ...reviewForms, [booking._id]: { ...reviewForms[booking._id], comment: e.target.value } })} placeholder="Share a quick review" className="bg-slate-50 rounded-xl px-3 py-2 outline-none" />
-                    <button onClick={() => submitReview(booking._id)} className="px-4 py-2 rounded-xl bg-primary-600 text-white font-bold">Review</button>
+                    <input value={reviewForms[booking._id]?.comment || ''} onChange={(e) => setReviewForms({ ...reviewForms, [booking._id]: { ...reviewForms[booking._id], comment: e.target.value } })} placeholder={t('dashboard.shareReview')} className="bg-slate-50 rounded-xl px-3 py-2 outline-none" />
+                    <button onClick={() => submitReview(booking._id)} className="px-4 py-2 rounded-xl bg-primary-600 text-white font-bold">{t('dashboard.review')}</button>
                   </div>
                 )}
                 {booking.review && (
                   <p className="lg:basis-full text-sm font-bold text-emerald-700 bg-emerald-50 rounded-xl px-4 py-3">
-                    Reviewed: {booking.review.rating} stars
+                    {t('dashboard.reviewed', { rating: booking.review.rating })}
                   </p>
                 )}
               </article>
@@ -333,9 +341,9 @@ const Dashboard = () => {
 
           {pagination.pages > 1 && (
             <div className="flex flex-wrap justify-center gap-3 pt-4">
-              <button disabled={pagination.page <= 1} onClick={() => fetchBookings(pagination.page - 1)} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">Previous</button>
-              <span className="px-5 py-3 text-slate-500 font-bold">Page {pagination.page} of {pagination.pages}</span>
-              <button disabled={pagination.page >= pagination.pages} onClick={() => fetchBookings(pagination.page + 1)} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">Next</button>
+              <button disabled={pagination.page <= 1} onClick={() => fetchBookings(pagination.page - 1)} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">{t('common.previous')}</button>
+              <span className="px-5 py-3 text-slate-500 font-bold">{t('common.page', { page: pagination.page, pages: pagination.pages })}</span>
+              <button disabled={pagination.page >= pagination.pages} onClick={() => fetchBookings(pagination.page + 1)} className="px-5 py-3 bg-white border border-slate-100 rounded-xl font-bold disabled:opacity-40">{t('common.next')}</button>
             </div>
           )}
         </section>

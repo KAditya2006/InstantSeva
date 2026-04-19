@@ -2,6 +2,7 @@ const WorkerProfile = require('../models/WorkerProfile');
 const Review = require('../models/Review');
 const { getPagination } = require('../utils/bookingRules');
 const escapeRegex = require('../utils/escapeRegex');
+const { normalizeServiceSearch } = require('../utils/serviceKeywords');
 
 const SERVICE_ALIASES = {
   pharmacist: ['pharmacist', 'pharamascist'],
@@ -83,7 +84,7 @@ const attachWorkerPresence = (worker, onlineUserIds = new Set()) => {
 };
 
 const getSearchTerms = (searchTerm) => {
-  const normalized = String(searchTerm || '').trim().toLowerCase();
+  const normalized = String(normalizeServiceSearch(searchTerm) || '').trim().toLowerCase();
   if (!normalized) return [];
   return [...new Set([normalized, ...(SERVICE_ALIASES[normalized] || [])])];
 };

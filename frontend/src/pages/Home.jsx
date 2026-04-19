@@ -2,6 +2,9 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { CATEGORY_METADATA } from '../constants/professions';
+import { useTranslation } from 'react-i18next';
+import VoiceSearchButton from '../components/VoiceSearchButton';
+import { normalizeServiceSearch } from '../utils/multilingualSearch';
 import { 
   Search, 
   MapPin, 
@@ -49,11 +52,13 @@ const CATEGORIES = Object.entries(CATEGORY_METADATA).slice(0, 10).map(([name, me
 
 const Home = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [query, setQuery] = React.useState('');
 
   const handleSearch = (e) => {
     e.preventDefault();
-    navigate(`/search${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+    const normalizedQuery = normalizeServiceSearch(query);
+    navigate(`/search${normalizedQuery ? `?q=${encodeURIComponent(normalizedQuery)}` : ''}`);
   };
 
   return (
@@ -73,10 +78,10 @@ const Home = () => {
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold font-heading tracking-tight text-slate-900 leading-[1.08] sm:leading-[1.1] mb-6">
-              Expert Help at your <br /> <span className="gradient-text">Doorstep</span> with <span className="text-primary-600">InstantSeva</span>
+              {t('home.heroTitle')}
             </h1>
             <p className="text-base sm:text-xl text-slate-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed">
-              Find trusted local experts in seconds. Professional service, guaranteed quality, and upfront pricing for every home need.
+              {t('home.heroSubtitle')}
             </p>
 
             {/* Search Bar */}
@@ -91,6 +96,10 @@ const Home = () => {
                   className="w-full text-slate-900 outline-none text-base sm:text-lg font-medium min-w-0"
                 />
               </div>
+              <VoiceSearchButton
+                onTranscript={(text) => setQuery(text)}
+                speakText={t('voice.searchingFor', { text: query || t('common.searchServices') })}
+              />
               <div className="w-[2px] h-8 bg-slate-100 hidden md:block" />
               <div className="flex-1 w-full flex items-center gap-3 px-4 py-3">
                 <MapPin className="text-slate-400" size={20} />
@@ -101,7 +110,7 @@ const Home = () => {
                 />
               </div>
               <button className="w-full md:w-auto px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98]">
-                Search
+                {t('common.search')}
               </button>
             </form>
           </Motion.div>
@@ -111,8 +120,8 @@ const Home = () => {
       {/* Categories Section */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto">
         <div className="mb-12">
-          <h2 className="text-3xl font-bold font-heading text-slate-900 mb-2">Explore Categories</h2>
-          <p className="text-slate-500 text-lg">Browse curated services from our verified experts.</p>
+          <h2 className="text-3xl font-bold font-heading text-slate-900 mb-2">{t('home.categoryGrid')}</h2>
+          <p className="text-slate-500 text-lg">{t('home.categorySubtitle')}</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
@@ -126,7 +135,7 @@ const Home = () => {
               <div className="p-4 bg-white rounded-2xl premium-shadow transform group-hover:scale-110 transition-transform">
                 {React.cloneElement(cat.icon, { size: 32 })}
               </div>
-              <span className="font-bold text-slate-800 tracking-tight">{cat.name}</span>
+              <span className="font-bold text-slate-800 tracking-tight">{t(`services.${cat.slug}`, { defaultValue: cat.name })}</span>
             </Motion.div>
           ))}
         </div>
@@ -137,24 +146,23 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 items-center gap-12 lg:gap-16">
           <div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-heading text-white mb-6 leading-tight">
-              Quality services <br /> 
-              <span className="text-primary-400">at your doorstep.</span>
+              {t('home.heroTitle')}
             </h2>
             <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-              We vet every professional on our platform through a strict KYC and experience check. Booking a pro has never been safer or easier.
+              {t('home.heroSubtitle')}
             </p>
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3 text-white font-medium">
                 <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 </div>
-                Verified Professional Identity
+                {t('home.verifiedPros')}
               </div>
               <div className="flex items-center gap-3 text-white font-medium">
                 <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 </div>
-                Secure Payments & Transparent Pricing
+                {t('home.upfrontPricing')}
               </div>
             </div>
           </div>

@@ -94,6 +94,7 @@ const toPublicUser = async (user) => {
     email: user.email,
     role: user.role,
     avatar: user.avatar,
+    preferredLanguage: user.preferredLanguage || 'en',
     phone: user.phone,
     location: user.location,
     isVerified: user.isVerified,

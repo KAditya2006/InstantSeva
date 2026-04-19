@@ -1,4 +1,5 @@
 import axios from 'axios';
+import i18n from '../i18n';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -22,6 +23,9 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const language = i18n.resolvedLanguage || i18n.language || localStorage.getItem('instantseva.language') || 'en';
+  config.headers['Accept-Language'] = language;
+  config.headers['X-Language'] = language;
   return config;
 });
 

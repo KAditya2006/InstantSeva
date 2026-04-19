@@ -19,6 +19,10 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  language: {
+    type: String,
+    default: 'en'
+  },
   entityType: String,
   entityId: mongoose.Schema.Types.ObjectId,
   read: {

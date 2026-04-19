@@ -8,6 +8,7 @@ const sendEmail = require('../utils/sendEmail');
 const { toPublicUser } = require('../utils/userAccess');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { normalizeLanguage } = require('../utils/languages');
 
 const MAX_OTP_ATTEMPTS = 5;
 const MAX_PASSWORD_RESET_ATTEMPTS = 5;
@@ -53,7 +54,7 @@ const generateToken = (id) => {
 
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role, address, homeNumber, phone, city, area, landmark, pincode, professions, experience, bio, location } = req.body;
+    const { name, email, password, role, address, homeNumber, phone, city, area, landmark, pincode, professions, experience, bio, location, preferredLanguage } = req.body;
     const normalizedEmail = normalizeEmail(email);
     const requestedRole = role === 'worker' ? 'worker' : 'user';
     const coordinates = normalizeCoordinates(location?.coordinates || req.body.coordinates);
@@ -64,7 +65,7 @@ exports.register = async (req, res, next) => {
 
     const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
-      return res.status(400).json({ success: false, message: 'User already exists' });
+      return res.status(400).json({ success: false, message: req.t('userExists') });
     }
 
     const user = await User.create({
@@ -73,6 +74,7 @@ exports.register = async (req, res, next) => {
       password,
       role: requestedRole,
       phone,
+      preferredLanguage: normalizeLanguage(preferredLanguage || req.language),
       location: {
         address,
         city,
@@ -138,7 +140,7 @@ exports.register = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful. Please verify your email.',
+      message: req.t('registrationOk'),
       userId: user._id
     });
   } catch (error) {
@@ -193,16 +195,16 @@ exports.login = async (req, res, next) => {
     const normalizedEmail = normalizeEmail(email);
 
     if (!normalizedEmail || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide email and password' });
+      return res.status(400).json({ success: false, message: req.t('missingLoginFields') });
     }
 
     const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user || !(await user.comparePassword(password, user.password))) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: req.t('invalidCredentials') });
     }
 
     if (!user.isVerified) {
-      return res.status(403).json({ success: false, message: 'Please verify your email before logging in' });
+      return res.status(403).json({ success: false, message: req.t('verifyBeforeLogin') });
     }
 
     const token = generateToken(user._id);

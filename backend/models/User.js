@@ -58,6 +58,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '/avatar.svg'
   },
+  preferredLanguage: {
+    type: String,
+    default: 'en',
+    enum: ['en', 'hi', 'bn', 'te', 'mr', 'ta', 'ur', 'gu', 'kn', 'or', 'ml', 'pa', 'as', 'mai', 'sat', 'ks', 'ne', 'kok', 'sd', 'doi', 'mni', 'brx']
+  },
   location: {
     type: {
       type: String,

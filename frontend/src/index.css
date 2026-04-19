@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-heading: 'Outfit', sans-serif;
+  --font-sans: 'Inter', 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Bengali', 'Noto Sans Telugu', 'Noto Sans Tamil', 'Noto Sans Gujarati', 'Noto Sans Kannada', 'Noto Sans Oriya', 'Noto Sans Malayalam', 'Noto Sans Gurmukhi', 'Noto Naskh Arabic', 'Noto Sans Ol Chiki', 'Noto Sans Meetei Mayek', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Bengali', 'Noto Sans Telugu', 'Noto Sans Tamil', 'Noto Sans Gujarati', 'Noto Sans Kannada', 'Noto Sans Oriya', 'Noto Sans Malayalam', 'Noto Sans Gurmukhi', 'Noto Naskh Arabic', system-ui, sans-serif;
 }
 
 @theme {
@@ -22,6 +22,21 @@ body {
   font-family: var(--font-sans);
   background-color: white;
   color: #1e293b;
+}
+
+[dir="rtl"] body,
+body.is-rtl {
+  text-align: right;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}
+
+[dir="rtl"] .rtl\:flex-row-reverse {
+  flex-direction: row-reverse;
 }
 
 h1, h2, h3, h4, h5, h6 {
