@@ -105,21 +105,21 @@ exports.createBooking = asyncHandler(async (req, res) => {
   const { workerId, service, scheduledDate, address, additionalNotes, serviceLocation, coordinates } = req.body;
 
   if (!workerId || !service || !scheduledDate || !address) {
-    return res.status(400).json({ success: false, message: 'Worker, service, date, and address are required' });
+    return res.status(400).json({ success: false, message: req.t('bookingRequiredFields') });
   }
 
   const parsedScheduledDate = parseFutureScheduledDate(scheduledDate);
   if (!parsedScheduledDate) {
-    return res.status(400).json({ success: false, message: 'Please choose a valid future date and time' });
+    return res.status(400).json({ success: false, message: req.t('bookingFutureDate') });
   }
 
   if (req.user.role !== 'user') {
-    return res.status(403).json({ success: false, message: 'Only customers can create bookings' });
+    return res.status(403).json({ success: false, message: req.t('onlyCustomersCreateBookings') });
   }
 
   const worker = await User.findOne({ _id: workerId, role: 'worker' });
   if (!worker) {
-    return res.status(404).json({ success: false, message: 'Worker not found' });
+    return res.status(404).json({ success: false, message: req.t('workerNotFound') });
   }
 
   const profile = await WorkerProfile.findOne({
@@ -132,7 +132,7 @@ exports.createBooking = asyncHandler(async (req, res) => {
   });
 
   if (!profile) {
-    return res.status(400).json({ success: false, message: 'Worker is not available for bookings' });
+    return res.status(400).json({ success: false, message: req.t('workerUnavailableBooking') });
   }
 
   const serviceCoordinates = normalizeCoordinates(
@@ -169,8 +169,9 @@ exports.createBooking = asyncHandler(async (req, res) => {
   await createNotification({
     user: workerId,
     type: 'booking',
-    title: 'New booking request',
-    message: `${req.user.name} requested ${service}`,
+    titleKey: 'newBookingRequestTitle',
+    messageKey: 'newBookingRequestMessage',
+    messageParams: { name: req.user.name, service },
     entityType: 'Booking',
     entityId: booking._id
   });
@@ -209,27 +210,30 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
   const allowedStatuses = ['accepted', 'rejected', 'completed', 'cancelled'];
 
   if (!allowedStatuses.includes(status)) {
-    return res.status(400).json({ success: false, message: 'Invalid booking status' });
+    return res.status(400).json({ success: false, message: req.t('invalidBookingStatus') });
   }
 
   const booking = await Booking.findById(req.params.id);
   if (!booking) {
-    return res.status(404).json({ success: false, message: 'Booking not found' });
+    return res.status(404).json({ success: false, message: req.t('bookingNotFound') });
   }
 
   const isCustomer = booking.user.toString() === req.user.id.toString();
   const isWorker = booking.worker.toString() === req.user.id.toString();
 
   if (status === 'cancelled' && !isCustomer && req.user.role !== 'admin') {
-    return res.status(403).json({ success: false, message: 'Only the customer can cancel this booking' });
+    return res.status(403).json({ success: false, message: req.t('onlyCustomerCancelBooking') });
   }
 
   if (['accepted', 'rejected', 'completed'].includes(status) && !isWorker && req.user.role !== 'admin') {
-    return res.status(403).json({ success: false, message: 'Only the assigned worker can update this booking' });
+    return res.status(403).json({ success: false, message: req.t('onlyAssignedWorkerUpdateBooking') });
   }
 
   if (!canTransitionBooking(booking.status, status)) {
-    return res.status(400).json({ success: false, message: `Cannot change booking from ${booking.status} to ${status}` });
+    return res.status(400).json({
+      success: false,
+      message: req.t('cannotChangeBookingStatus', { from: booking.status, to: status })
+    });
   }
 
   const previousStatus = booking.status;
@@ -247,8 +251,9 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
   await createNotification({
     user: isWorker ? booking.user : booking.worker,
     type: 'booking',
-    title: 'Booking status updated',
-    message: `Your booking is now ${status}`,
+    titleKey: 'bookingStatusUpdatedTitle',
+    messageKey: 'bookingStatusUpdatedMessage',
+    messageParams: { status },
     entityType: 'Booking',
     entityId: booking._id
   });
@@ -271,8 +276,8 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
     await createNotification({
       user: booking.worker,
       type: 'otp',
-      title: 'Start OTP Sent',
-      message: 'Your job start OTP has been sent to your email.',
+      titleKey: 'startOtpSentTitle',
+      messageKey: 'startOtpSentMessage',
       entityType: 'Booking',
       entityId: booking._id
     });
@@ -295,21 +300,24 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
 exports.updatePaymentStatus = asyncHandler(async (req, res) => {
   const { paymentStatus, paymentMethod, paymentReference } = req.body;
   if (!['pending', 'paid', 'failed', 'refunded'].includes(paymentStatus)) {
-    return res.status(400).json({ success: false, message: 'Invalid payment status' });
+    return res.status(400).json({ success: false, message: req.t('invalidPaymentStatus') });
   }
 
   const booking = await Booking.findById(req.params.id);
   if (!booking) {
-    return res.status(404).json({ success: false, message: 'Booking not found' });
+    return res.status(404).json({ success: false, message: req.t('bookingNotFound') });
   }
 
   const isCustomer = booking.user.toString() === req.user.id.toString();
   if (!isCustomer && req.user.role !== 'admin') {
-    return res.status(403).json({ success: false, message: 'Only the customer or admin can update payment status' });
+    return res.status(403).json({ success: false, message: req.t('onlyCustomerOrAdminPayment') });
   }
 
   if (!canUpdatePaymentStatus(booking, paymentStatus)) {
-    return res.status(400).json({ success: false, message: `Cannot mark payment ${paymentStatus} for a ${booking.status} booking` });
+    return res.status(400).json({
+      success: false,
+      message: req.t('cannotMarkPayment', { paymentStatus, bookingStatus: booking.status })
+    });
   }
 
   booking.paymentStatus = paymentStatus;
@@ -328,8 +336,9 @@ exports.updatePaymentStatus = asyncHandler(async (req, res) => {
   await createNotification({
     user: booking.worker,
     type: 'payment',
-    title: 'Payment updated',
-    message: `Payment status changed to ${paymentStatus}`,
+    titleKey: 'paymentUpdatedTitle',
+    messageKey: 'paymentUpdatedMessage',
+    messageParams: { paymentStatus },
     entityType: 'Booking',
     entityId: booking._id
   });
@@ -344,20 +353,20 @@ exports.createReview = asyncHandler(async (req, res) => {
   const numericRating = Number(rating);
 
   if (!Number.isFinite(numericRating) || numericRating < 1 || numericRating > 5) {
-    return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+    return res.status(400).json({ success: false, message: req.t('ratingBetween') });
   }
 
   const booking = await Booking.findById(req.params.id);
   if (!booking) {
-    return res.status(404).json({ success: false, message: 'Booking not found' });
+    return res.status(404).json({ success: false, message: req.t('bookingNotFound') });
   }
 
   if (booking.user.toString() !== req.user.id.toString()) {
-    return res.status(403).json({ success: false, message: 'Only the customer can review this booking' });
+    return res.status(403).json({ success: false, message: req.t('onlyCustomerReview') });
   }
 
   if (booking.status !== 'completed') {
-    return res.status(400).json({ success: false, message: 'Only completed bookings can be reviewed' });
+    return res.status(400).json({ success: false, message: req.t('onlyCompletedBookingsReviewed') });
   }
 
   try {
@@ -395,8 +404,9 @@ exports.createReview = asyncHandler(async (req, res) => {
     await createNotification({
       user: booking.worker,
       type: 'review',
-      title: 'New review received',
-      message: `${req.user.name} rated your work ${numericRating} stars`,
+      titleKey: 'newReviewTitle',
+      messageKey: 'newReviewMessage',
+      messageParams: { name: req.user.name, rating: numericRating },
       entityType: 'Review',
       entityId: review._id
     });
@@ -404,7 +414,7 @@ exports.createReview = asyncHandler(async (req, res) => {
     return res.status(201).json({ success: true, data: review });
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({ success: false, message: 'This booking has already been reviewed' });
+      return res.status(400).json({ success: false, message: req.t('bookingAlreadyReviewed') });
     }
     throw error;
   }
@@ -415,19 +425,19 @@ exports.verifyStartOTP = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id);
 
   if (!booking) {
-    return res.status(404).json({ success: false, message: 'Booking not found' });
+    return res.status(404).json({ success: false, message: req.t('bookingNotFound') });
   }
 
   if (!isBookingCustomer(booking, req.user)) {
-    return res.status(403).json({ success: false, message: 'Only the customer can verify the worker OTP' });
+    return res.status(403).json({ success: false, message: req.t('onlyCustomerVerifyWorkerOtp') });
   }
 
   if (booking.status !== 'accepted') {
-    return res.status(400).json({ success: false, message: 'Booking not in valid state for verification' });
+    return res.status(400).json({ success: false, message: req.t('bookingInvalidForVerification') });
   }
 
   if (booking.startOTP !== submittedOtp) {
-    return res.status(400).json({ success: false, message: 'Invalid start OTP' });
+    return res.status(400).json({ success: false, message: req.t('invalidStartOtp') });
   }
 
   booking.status = 'in_progress';
@@ -444,8 +454,8 @@ exports.verifyStartOTP = asyncHandler(async (req, res) => {
   await createNotification({
     user: booking.worker,
     type: 'booking',
-    title: 'Job Started',
-    message: 'User verified your OTP. Job is now in progress.',
+    titleKey: 'jobStartedTitle',
+    messageKey: 'jobStartedMessage',
     entityType: 'Booking',
     entityId: booking._id
   });
@@ -459,7 +469,7 @@ exports.verifyStartOTP = asyncHandler(async (req, res) => {
 
   const populatedBooking = await populateBooking(Booking.findById(booking._id));
   const finalData = await attachContactDetails([populatedBooking]);
-  res.status(200).json({ success: true, message: 'Job verified and started', data: sanitizeBookingForViewer(finalData[0], req.user) });
+  res.status(200).json({ success: true, message: req.t('jobVerifiedStarted'), data: sanitizeBookingForViewer(finalData[0], req.user) });
 });
 
 exports.verifyCompletionOTP = asyncHandler(async (req, res) => {
@@ -467,19 +477,19 @@ exports.verifyCompletionOTP = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id);
 
   if (!booking) {
-    return res.status(404).json({ success: false, message: 'Booking not found' });
+    return res.status(404).json({ success: false, message: req.t('bookingNotFound') });
   }
 
   if (!isBookingWorker(booking, req.user)) {
-    return res.status(403).json({ success: false, message: 'Only the assigned worker can verify the completion OTP' });
+    return res.status(403).json({ success: false, message: req.t('onlyAssignedWorkerVerifyCompletionOtp') });
   }
 
   if (booking.status !== 'in_progress') {
-    return res.status(400).json({ success: false, message: 'Booking is not in progress' });
+    return res.status(400).json({ success: false, message: req.t('bookingNotInProgress') });
   }
 
   if (booking.completionOTP !== submittedOtp) {
-    return res.status(400).json({ success: false, message: 'Invalid completion OTP' });
+    return res.status(400).json({ success: false, message: req.t('invalidCompletionOtp') });
   }
 
   booking.status = 'completed';
@@ -496,13 +506,13 @@ exports.verifyCompletionOTP = asyncHandler(async (req, res) => {
   await createNotification({
     user: booking.user,
     type: 'booking',
-    title: 'Job Completed',
-    message: 'Your job has been successfully verified and completed.',
+    titleKey: 'jobCompletedTitle',
+    messageKey: 'jobCompletedMessage',
     entityType: 'Booking',
     entityId: booking._id
   });
 
   const populatedBooking = await populateBooking(Booking.findById(booking._id));
   const finalData = await attachContactDetails([populatedBooking]);
-  res.status(200).json({ success: true, message: 'Job verified and completed', data: sanitizeBookingForViewer(finalData[0], req.user) });
+  res.status(200).json({ success: true, message: req.t('jobVerifiedCompleted'), data: sanitizeBookingForViewer(finalData[0], req.user) });
 });

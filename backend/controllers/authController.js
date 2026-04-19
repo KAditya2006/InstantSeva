@@ -60,7 +60,7 @@ exports.register = async (req, res, next) => {
     const coordinates = normalizeCoordinates(location?.coordinates || req.body.coordinates);
 
     if (!name || !normalizedEmail || !password || !phone) {
-      return res.status(400).json({ success: false, message: 'Name, email, password, and phone number are required' });
+      return res.status(400).json({ success: false, message: req.t('registerRequired') });
     }
 
     const userExists = await User.findOne({ email: normalizedEmail });
@@ -156,20 +156,20 @@ exports.verifyOTP = async (req, res, next) => {
 
     const otpRecord = await OTP.findOne({ email: normalizedEmail }).sort({ createdAt: -1 });
     if (!otpRecord) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+      return res.status(400).json({ success: false, message: req.t('invalidOrExpiredOtp') });
     }
 
     if (otpRecord.otp !== submittedOtp) {
       const tooManyAttempts = await recordFailedAttempt(otpRecord, MAX_OTP_ATTEMPTS);
       return res.status(400).json({
         success: false,
-        message: tooManyAttempts ? 'Too many invalid attempts. Please request a new OTP.' : 'Invalid or expired OTP'
+        message: tooManyAttempts ? req.t('otpTooManyAttempts') : req.t('invalidOrExpiredOtp')
       });
     }
 
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ success: false, message: req.t('userNotFound') });
     }
 
     user.isVerified = true;
@@ -226,11 +226,11 @@ exports.resendOTP = async (req, res, next) => {
 
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ success: false, message: req.t('userNotFound') });
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ success: false, message: 'Email is already verified' });
+      return res.status(400).json({ success: false, message: req.t('emailAlreadyVerified') });
     }
     
     await OTP.deleteMany({ email: normalizedEmail });
@@ -244,7 +244,7 @@ exports.resendOTP = async (req, res, next) => {
       html: `<h1>InstantSeva</h1><p>Your new OTP is: <strong>${otpCode}</strong></p>`
     });
 
-    res.status(200).json({ success: true, message: 'OTP sent successfully' });
+    res.status(200).json({ success: true, message: req.t('otpSentSuccessfully') });
   } catch (error) {
     next(error);
   }
@@ -267,12 +267,12 @@ exports.forgotPassword = async (req, res, next) => {
     const normalizedEmail = normalizeEmail(email);
 
     if (!normalizedEmail) {
-      return res.status(400).json({ success: false, message: 'Email is required' });
+      return res.status(400).json({ success: false, message: req.t('emailRequired') });
     }
 
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(200).json({ success: true, message: 'If an account exists, a reset code has been sent' });
+      return res.status(200).json({ success: true, message: req.t('resetCodeSent') });
     }
 
     const resetToken = generateOTP();
@@ -288,7 +288,7 @@ exports.forgotPassword = async (req, res, next) => {
       html: `<h1>Password Reset</h1><p>Your reset code is: <strong>${resetToken}</strong></p>`
     });
 
-    res.status(200).json({ success: true, message: 'If an account exists, a reset code has been sent' });
+    res.status(200).json({ success: true, message: req.t('resetCodeSent') });
   } catch (error) {
     next(error);
   }
@@ -301,34 +301,34 @@ exports.resetPassword = async (req, res, next) => {
     const submittedToken = String(token || '').trim();
 
     if (!normalizedEmail || !submittedToken || !password) {
-      return res.status(400).json({ success: false, message: 'Email, reset code, and new password are required' });
+      return res.status(400).json({ success: false, message: req.t('resetRequired') });
     }
 
     const tokenHash = crypto.createHash('sha256').update(submittedToken).digest('hex');
     const resetRecord = await PasswordReset.findOne({ email: normalizedEmail }).sort({ createdAt: -1 });
 
     if (!resetRecord) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired reset code' });
+      return res.status(400).json({ success: false, message: req.t('invalidOrExpiredResetCode') });
     }
 
     if (!compareTokenHash(resetRecord.tokenHash, tokenHash)) {
       const tooManyAttempts = await recordFailedAttempt(resetRecord, MAX_PASSWORD_RESET_ATTEMPTS);
       return res.status(400).json({
         success: false,
-        message: tooManyAttempts ? 'Too many invalid reset attempts. Please request a new code.' : 'Invalid or expired reset code'
+        message: tooManyAttempts ? req.t('resetTooManyAttempts') : req.t('invalidOrExpiredResetCode')
       });
     }
 
     const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ success: false, message: req.t('userNotFound') });
     }
 
     user.password = password;
     await user.save();
     await PasswordReset.deleteOne({ _id: resetRecord._id });
 
-    res.status(200).json({ success: true, message: 'Password updated successfully' });
+    res.status(200).json({ success: true, message: req.t('passwordUpdated') });
   } catch (error) {
     next(error);
   }
