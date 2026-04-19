@@ -8,16 +8,12 @@ const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const Booking = require('./models/Booking');
 const { getAllowedOrigins, isAllowedOrigin } = require('./utils/allowedOrigins');
+const logger = require('./utils/logger');
 
 validateEnv();
 
 const PORT = process.env.PORT || 5000;
 const allowedOrigins = getAllowedOrigins();
-const logDev = (...args) => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(...args);
-  }
-};
 
 // Connect to Database
 connectDB();
@@ -63,6 +59,9 @@ io.use(async (socket, next) => {
     if (!user) {
       return next(new Error('User not found'));
     }
+    if (user.isDeleted) {
+      return next(new Error('User account is not active'));
+    }
 
     socket.user = user;
     socket.join(user._id.toString());
@@ -83,9 +82,9 @@ io.on('connection', (socket) => {
     setUserPresence({ userId: socketUserId, isOnline: true });
   }
 
-  logDev('A user connected:', socketUserId);
+  logger.dev('Socket connected', { userId: socketUserId });
   markDeliveredForUser({ io, userId: socket.user._id }).catch((error) => {
-    console.error('Message delivery receipt error:', error.message);
+    logger.error('Message delivery receipt error', { error: error.message, userId: socketUserId });
   });
 
   socket.on('join_chat', async (chatId) => {
@@ -93,7 +92,7 @@ io.on('connection', (socket) => {
     if (!chat) return;
 
     socket.join(chatId);
-    logDev(`User ${socket.user._id.toString()} joined chat room: ${chatId}`);
+    logger.dev('User joined chat room', { userId: socket.user._id.toString(), chatId });
   });
 
   socket.on('join_booking', async (bookingId) => {
@@ -105,7 +104,7 @@ io.on('connection', (socket) => {
         booking.worker.toString() !== socket.user._id.toString()) return;
 
     socket.join(`booking_${bookingId}`);
-    logDev(`User ${socket.user._id.toString()} joined booking room: ${bookingId}`);
+    logger.dev('User joined booking room', { userId: socket.user._id.toString(), bookingId });
   });
 
   socket.on('update_worker_location', async (data) => {
@@ -146,7 +145,7 @@ io.on('connection', (socket) => {
       onlineSocketCounts.set(socketUserId, nextSocketCount);
     }
 
-    logDev('User disconnected');
+    logger.dev('Socket disconnected', { userId: socketUserId });
   });
 });
 
@@ -154,5 +153,9 @@ io.on('connection', (socket) => {
 app.set('io', io);
 
 server.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  logger.info('Server running', {
+    mode: process.env.NODE_ENV || 'development',
+    port: PORT,
+    allowedOrigins
+  });
 });

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +17,7 @@ const toStoredCoordinates = (coordinates) => {
 };
 
 const EditProfile = () => {
+  const { t } = useTranslation();
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ const EditProfile = () => {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('Image size must be less than 2MB');
+      toast.error(t('editProfile.imageTooLarge'));
       return;
     }
 
@@ -54,11 +56,11 @@ const EditProfile = () => {
     try {
       const { data } = await updateAvatar(uploadData);
       if (data.success) {
-        toast.success('Profile picture updated');
+        toast.success(t('backend.avatarUpdated'));
         setUser({ ...user, avatar: data.avatar });
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to upload image');
+      toast.error(error.response?.data?.message || t('editProfile.imageUploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -71,7 +73,7 @@ const EditProfile = () => {
     try {
       const { data } = await updateProfile(formData);
       if (data.success) {
-        toast.success('Profile updated successfully');
+        toast.success(t('backend.profileUpdated'));
         setUser(data.user);
 
         if (data.user?.canAccessDashboard && data.user?.role !== 'admin') {
@@ -81,7 +83,7 @@ const EditProfile = () => {
         }
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+      toast.error(error.response?.data?.message || t('editProfile.profileUpdateFailed'));
     } finally {
       setLoading(false);
     }
@@ -95,14 +97,14 @@ const EditProfile = () => {
           onClick={() => navigate('/profile')}
           className="flex items-center gap-2 text-slate-500 hover:text-primary-600 font-bold mb-8 transition-colors"
         >
-          <ArrowLeft size={20} /> Back to Profile
+          <ArrowLeft size={20} /> {t('editProfile.backToProfile')}
         </button>
 
         <div className="bg-white rounded-3xl border border-slate-100 premium-shadow p-6 sm:p-10">
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-bold font-heading text-slate-900">Edit Profile</h1>
-              <p className="text-slate-500 mt-1">Update your personal and location details.</p>
+              <h1 className="text-3xl font-bold font-heading text-slate-900">{t('profile.editProfile')}</h1>
+              <p className="text-slate-500 mt-1">{t('editProfile.subtitle')}</p>
             </div>
 
             {/* Avatar Section */}
@@ -121,7 +123,7 @@ const EditProfile = () => {
               </div>
               <label 
                 className="absolute -bottom-2 -right-2 p-2 bg-primary-600 text-white rounded-lg cursor-pointer hover:bg-primary-700 transition-all premium-shadow group-hover:scale-110 active:scale-95"
-                title="Change Photo"
+                title={t('editProfile.changePhoto')}
               >
                 <Camera size={16} />
                 <input 
@@ -139,7 +141,7 @@ const EditProfile = () => {
             <div className="space-y-5">
               <div className="grid sm:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1">Full Name</label>
+                  <label className="text-sm font-bold text-slate-700 ml-1">{t('auth.fullName')}</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input 
@@ -153,14 +155,14 @@ const EditProfile = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1">Phone Number</label>
+                  <label className="text-sm font-bold text-slate-700 ml-1">{t('auth.phone')}</label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input 
                       type="tel" 
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      placeholder="e.g., +1 234 567 890"
+                      placeholder={t('editProfile.phonePlaceholder')}
                       className="w-full bg-slate-50 border border-slate-100 pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-primary-500 transition-colors font-medium"
                     />
                   </div>
@@ -169,7 +171,7 @@ const EditProfile = () => {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1">Location</label>
+                  <label className="text-sm font-bold text-slate-700 ml-1">{t('auth.location')}</label>
                   <AddressAutocomplete 
                     value={formData.address}
                     onChange={({ address, coordinates }) => setFormData({
@@ -177,21 +179,21 @@ const EditProfile = () => {
                       address,
                       coordinates: toStoredCoordinates(coordinates)
                     })}
-                    placeholder="Enter your street or search your location..."
+                    placeholder={t('editProfile.locationPlaceholder')}
                   />
                 </div>
               </div>
 
               {user?.role === 'user' && (
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1">Home / Apt Number</label>
+                  <label className="text-sm font-bold text-slate-700 ml-1">{t('editProfile.homeAptNumber')}</label>
                   <div className="relative">
                     <Home className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input 
                       type="text" 
                       value={formData.homeNumber}
                       onChange={(e) => setFormData({...formData, homeNumber: e.target.value})}
-                      placeholder="e.g., Suite 200, House 42"
+                      placeholder={t('editProfile.homePlaceholder')}
                       className="w-full bg-slate-50 border border-slate-100 pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-primary-500 transition-colors font-medium"
                     />
                   </div>
@@ -205,9 +207,9 @@ const EditProfile = () => {
                 disabled={loading}
                 className="w-full sm:w-auto px-10 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? 'Saving Changes...' : (
+                {loading ? t('editProfile.savingChanges') : (
                   <>
-                    <Save size={20} /> Save Changes
+                    <Save size={20} /> {t('editProfile.saveChanges')}
                   </>
                 )}
               </button>

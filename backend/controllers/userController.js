@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const { toPublicUser } = require('../utils/userAccess');
 const { normalizeLanguage } = require('../utils/languages');
+const { getUploadedFilePayload } = require('../utils/uploadedFile');
 
 const normalizeCoordinates = (coordinates) => {
   if (!Array.isArray(coordinates) || coordinates.length < 2) return undefined;
@@ -95,10 +96,13 @@ exports.uploadKYC = async (req, res, next) => {
       return res.status(404).json({ success: false, message: req.t('userNotFound') });
     }
 
-    const idProof = req.file;
+    const idProof = getUploadedFilePayload(req.file);
+    if (!idProof.url) {
+      return res.status(400).json({ success: false, message: req.t('idProofRequired') });
+    }
 
     user.kyc = {
-      idProof: { url: idProof.path, publicId: idProof.filename },
+      idProof,
       status: 'pending'
     };
 

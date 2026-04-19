@@ -10,19 +10,19 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
+      return res.status(401).json({ success: false, message: req.t('notAuthorizedRoute') });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id);
 
-    if (!req.user) {
-      return res.status(401).json({ success: false, message: 'User no longer exists' });
+    if (!req.user || req.user.isDeleted) {
+      return res.status(401).json({ success: false, message: req.t('userNoLongerExists') });
     }
 
     next();
   } catch (error) {
-    return res.status(401).json({ success: false, message: 'Not authorized' });
+    return res.status(401).json({ success: false, message: req.t('notAuthorized') });
   }
 };
 
@@ -31,7 +31,7 @@ exports.authorize = (...roles) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: `User role ${req.user.role} is not authorized to access this route`
+        message: req.t('roleNotAuthorized', { role: req.user.role })
       });
     }
     next();
@@ -42,7 +42,7 @@ exports.verifiedOnly = (req, res, next) => {
   if (!req.user.isVerified) {
     return res.status(403).json({
       success: false,
-      message: 'Please verify your email to access this resource'
+      message: req.t('verifyEmailAccess')
     });
   }
   next();
@@ -56,8 +56,8 @@ exports.dashboardApprovedOnly = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: access.profileComplete
-          ? 'Your profile is waiting for admin verification'
-          : 'Please complete your profile and submit verification first',
+          ? req.t('adminVerificationPending')
+          : req.t('completeProfileFirst'),
         onboarding: {
           profileComplete: access.profileComplete,
           approvalStatus: access.approvalStatus,

@@ -1,58 +1,70 @@
 const rateLimit = require('express-rate-limit');
 
-const createJsonLimiter = ({ windowMs, limit, message, skipSuccessfulRequests = false }) => rateLimit({
+const { tServer } = require('../utils/serverI18n');
+const { normalizeLanguage } = require('../utils/languages');
+
+const getRequestLanguage = (req) => normalizeLanguage(
+  req.language ||
+  req.headers['x-language'] ||
+  String(req.headers['accept-language'] || '').split(',')[0] ||
+  'en'
+);
+
+const createJsonLimiter = ({ windowMs, limit, messageKey, skipSuccessfulRequests = false }) => rateLimit({
   windowMs,
   limit,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   skipSuccessfulRequests,
-  message: {
-    success: false,
-    message
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: tServer(messageKey, getRequestLanguage(req))
+    });
   }
 });
 
 const authLimiter = createJsonLimiter({
   windowMs: 15 * 60 * 1000,
   limit: 120,
-  message: 'Too many authentication requests. Please wait a few minutes and try again.'
+  messageKey: 'authRateLimited'
 });
 
 const registrationLimiter = createJsonLimiter({
   windowMs: 60 * 60 * 1000,
   limit: 8,
-  message: 'Too many signup attempts from this device. Please try again later.'
+  messageKey: 'signupRateLimited'
 });
 
 const loginLimiter = createJsonLimiter({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   skipSuccessfulRequests: true,
-  message: 'Too many failed login attempts. Please wait and try again.'
+  messageKey: 'loginRateLimited'
 });
 
 const otpLimiter = createJsonLimiter({
   windowMs: 10 * 60 * 1000,
   limit: 8,
-  message: 'Too many verification attempts. Please request a new code after a short wait.'
+  messageKey: 'otpRateLimited'
 });
 
 const passwordResetLimiter = createJsonLimiter({
   windowMs: 60 * 60 * 1000,
   limit: 6,
-  message: 'Too many password reset attempts. Please try again later.'
+  messageKey: 'passwordResetRateLimited'
 });
 
 const chatMessageLimiter = createJsonLimiter({
   windowMs: 60 * 1000,
   limit: 40,
-  message: 'Too many chat messages. Please slow down and try again shortly.'
+  messageKey: 'chatRateLimited'
 });
 
 const locationSearchLimiter = createJsonLimiter({
   windowMs: 60 * 1000,
   limit: 60,
-  message: 'Too many location searches. Please wait a moment and try again.'
+  messageKey: 'locationRateLimited'
 });
 
 module.exports = {

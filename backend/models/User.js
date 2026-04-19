@@ -63,6 +63,12 @@ const userSchema = new mongoose.Schema({
     default: 'en',
     enum: ['en', 'hi', 'bn', 'te', 'mr', 'ta', 'ur', 'gu', 'kn', 'or', 'ml', 'pa', 'as', 'mai', 'sat', 'ks', 'ne', 'kok', 'sd', 'doi', 'mni', 'brx']
   },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: Date,
+  suspendedAt: Date,
   location: {
     type: {
       type: String,
@@ -90,6 +96,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.index({ location: '2dsphere' });
+userSchema.index({ role: 1, isDeleted: 1, createdAt: -1 });
 
 // Hash password before saving
 userSchema.pre('save', async function() {

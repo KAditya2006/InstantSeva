@@ -2,6 +2,7 @@ import React from 'react';
 import { Languages } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
+import { loadI18nLanguage } from '../i18n';
 import { updateProfile } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,6 +13,7 @@ const LanguageSwitcher = ({ compact = false, className = '' }) => {
 
   const handleChange = async (event) => {
     const preferredLanguage = event.target.value;
+    await loadI18nLanguage(preferredLanguage);
     await i18n.changeLanguage(preferredLanguage);
 
     if (!token) return;

@@ -2,6 +2,7 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { sendPushNotificationToUser } = require('../services/pushNotificationService');
 const { normalizeLanguage } = require('./languages');
+const logger = require('./logger');
 const { tServer } = require('./serverI18n');
 
 const pickLocalizedText = (value, language) => {
@@ -38,9 +39,7 @@ const createNotification = async ({
   });
 
   sendPushNotificationToUser({ user, notification }).catch((error) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error('Push notification dispatch failed:', error.message);
-    }
+    logger.dev('Push notification dispatch failed', { error: error.message, user });
   });
 
   return notification;

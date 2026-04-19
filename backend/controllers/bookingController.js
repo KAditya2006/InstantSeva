@@ -9,6 +9,9 @@ const { generateOTP, sendOTPEmail } = require('../services/otpService');
 const asyncHandler = require('../utils/asyncHandler');
 const { syncDynamicWorkerProfile } = require('../utils/syncWorkerProfile');
 
+const BOOKING_OTP_TTL_MS = 6 * 60 * 60 * 1000;
+const MAX_BOOKING_OTP_ATTEMPTS = 5;
+
 const populateBooking = (query) => {
   return query
     .populate('user', 'name email avatar phone location')
@@ -35,6 +38,19 @@ const parseFutureScheduledDate = (value) => {
   return date;
 };
 
+const getBookingOtpExpiry = () => new Date(Date.now() + BOOKING_OTP_TTL_MS);
+
+const hasBookingOtpExpired = (expiresAt) => {
+  if (!expiresAt) return true;
+  return new Date(expiresAt).getTime() <= Date.now();
+};
+
+const recordBookingOtpFailure = async (booking, attemptsField) => {
+  booking[attemptsField] = (booking[attemptsField] || 0) + 1;
+  await booking.save();
+  return booking[attemptsField] >= MAX_BOOKING_OTP_ATTEMPTS;
+};
+
 const normalizeCoordinates = (coordinates) => {
   if (!Array.isArray(coordinates) || coordinates.length < 2) return null;
   const [lng, lat] = coordinates.map(Number);
@@ -52,7 +68,11 @@ const sanitizeBookingForViewer = (booking, viewer) => {
   const canSeeCompletionOTP = isBookingCustomer(plainBooking, viewer) && plainBooking.status === 'in_progress' && !plainBooking.completionOTPVerified;
 
   delete plainBooking.startOTP;
+  delete plainBooking.startOTPExpiresAt;
+  delete plainBooking.startOTPAttempts;
   delete plainBooking.completionOTP;
+  delete plainBooking.completionOTPExpiresAt;
+  delete plainBooking.completionOTPAttempts;
 
   if (canSeeStartOTP) plainBooking.startOTP = startOTP;
   if (canSeeCompletionOTP) plainBooking.completionOTP = completionOTP;
@@ -261,6 +281,9 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
   if (status === 'accepted') {
     const otp = generateOTP();
     booking.startOTP = otp;
+    booking.startOTPExpiresAt = getBookingOtpExpiry();
+    booking.startOTPAttempts = 0;
+    booking.startOTPVerified = false;
     await booking.save();
 
     const profile = await WorkerProfile.findOneAndUpdate(
@@ -271,7 +294,7 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
     await syncDynamicWorkerProfile(profile);
 
     const workerPopulated = await User.findById(booking.worker);
-    await sendOTPEmail(workerPopulated.email, otp, 'Start');
+    await sendOTPEmail(workerPopulated.email, otp, 'Start', '6 hours');
 
     await createNotification({
       user: booking.worker,
@@ -436,12 +459,27 @@ exports.verifyStartOTP = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: req.t('bookingInvalidForVerification') });
   }
 
+  if ((booking.startOTPAttempts || 0) >= MAX_BOOKING_OTP_ATTEMPTS) {
+    return res.status(429).json({ success: false, message: req.t('tooManyBookingOtpAttempts') });
+  }
+
+  if (hasBookingOtpExpired(booking.startOTPExpiresAt)) {
+    return res.status(400).json({ success: false, message: req.t('bookingOtpExpired') });
+  }
+
   if (booking.startOTP !== submittedOtp) {
+    const locked = await recordBookingOtpFailure(booking, 'startOTPAttempts');
+    if (locked) {
+      return res.status(429).json({ success: false, message: req.t('tooManyBookingOtpAttempts') });
+    }
     return res.status(400).json({ success: false, message: req.t('invalidStartOtp') });
   }
 
   booking.status = 'in_progress';
   booking.startOTPVerified = true;
+  booking.startOTP = undefined;
+  booking.startOTPExpiresAt = undefined;
+  booking.startOTPAttempts = 0;
   await booking.save();
 
   const profile = await WorkerProfile.findOneAndUpdate(
@@ -462,10 +500,13 @@ exports.verifyStartOTP = asyncHandler(async (req, res) => {
 
   const completionOTP = generateOTP();
   booking.completionOTP = completionOTP;
+  booking.completionOTPExpiresAt = getBookingOtpExpiry();
+  booking.completionOTPAttempts = 0;
+  booking.completionOTPVerified = false;
   await booking.save();
 
   const userPopulated = await User.findById(booking.user);
-  await sendOTPEmail(userPopulated.email, completionOTP, 'Completion');
+  await sendOTPEmail(userPopulated.email, completionOTP, 'Completion', '6 hours');
 
   const populatedBooking = await populateBooking(Booking.findById(booking._id));
   const finalData = await attachContactDetails([populatedBooking]);
@@ -488,12 +529,27 @@ exports.verifyCompletionOTP = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: req.t('bookingNotInProgress') });
   }
 
+  if ((booking.completionOTPAttempts || 0) >= MAX_BOOKING_OTP_ATTEMPTS) {
+    return res.status(429).json({ success: false, message: req.t('tooManyBookingOtpAttempts') });
+  }
+
+  if (hasBookingOtpExpired(booking.completionOTPExpiresAt)) {
+    return res.status(400).json({ success: false, message: req.t('bookingOtpExpired') });
+  }
+
   if (booking.completionOTP !== submittedOtp) {
+    const locked = await recordBookingOtpFailure(booking, 'completionOTPAttempts');
+    if (locked) {
+      return res.status(429).json({ success: false, message: req.t('tooManyBookingOtpAttempts') });
+    }
     return res.status(400).json({ success: false, message: req.t('invalidCompletionOtp') });
   }
 
   booking.status = 'completed';
   booking.completionOTPVerified = true;
+  booking.completionOTP = undefined;
+  booking.completionOTPExpiresAt = undefined;
+  booking.completionOTPAttempts = 0;
   await booking.save();
 
   const profile = await WorkerProfile.findOneAndUpdate(

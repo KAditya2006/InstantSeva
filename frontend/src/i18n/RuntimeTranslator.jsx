@@ -61,11 +61,18 @@ const RuntimeTranslator = ({ children }) => {
   const { i18n } = useTranslation();
 
   React.useEffect(() => {
-    let raf = requestAnimationFrame(() => walkAndTranslate(document.body, i18n.language));
+    const language = String(i18n.language || 'en').split('-')[0];
+    if (!document.body) return undefined;
+    if (language === 'en') {
+      walkAndTranslate(document.body, language);
+      return undefined;
+    }
+
+    let raf = requestAnimationFrame(() => walkAndTranslate(document.body, language));
 
     const observer = new MutationObserver(() => {
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => walkAndTranslate(document.body, i18n.language));
+      raf = requestAnimationFrame(() => walkAndTranslate(document.body, language));
     });
 
     observer.observe(document.body, {

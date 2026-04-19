@@ -2,16 +2,14 @@ const User = require('../models/User');
 const WorkerProfile = require('../models/WorkerProfile');
 const Booking = require('../models/Booking');
 const AuditLog = require('../models/AuditLog');
-const Chat = require('../models/Chat');
-const Message = require('../models/Message');
 const Notification = require('../models/Notification');
 const OTP = require('../models/OTP');
 const PasswordReset = require('../models/PasswordReset');
 const PushSubscription = require('../models/PushSubscription');
-const Review = require('../models/Review');
 const createNotification = require('../utils/createNotification');
 const { getPagination } = require('../utils/bookingRules');
 const escapeRegex = require('../utils/escapeRegex');
+const logger = require('../utils/logger');
 const { syncDynamicWorkerProfile } = require('../utils/syncWorkerProfile');
 
 const ACTIVE_BOOKING_STATUSES = ['pending', 'accepted', 'in_progress'];
@@ -47,42 +45,35 @@ const hasActiveBookings = (userId) => {
   });
 };
 
-const deleteAccountData = async (userId) => {
-  const chats = await Chat.find({ participants: userId }).select('_id').lean();
-  const chatIds = chats.map((chat) => chat._id);
-
+const softDeleteAccountData = async (userId) => {
   await Promise.all([
-    Message.deleteMany({
-      $or: [
-        { sender: userId },
-        { chatId: { $in: chatIds } }
-      ]
-    }),
-    Chat.deleteMany({ _id: { $in: chatIds } }),
     Notification.deleteMany({ user: userId }),
     OTP.deleteMany({ user: userId }),
     PasswordReset.deleteMany({ user: userId }),
     PushSubscription.deleteMany({ user: userId }),
-    Review.deleteMany({
-      $or: [
-        { user: userId },
-        { worker: userId }
-      ]
-    }),
-    WorkerProfile.deleteOne({ user: userId })
+    WorkerProfile.findOneAndUpdate(
+      { user: userId },
+      { availabilityStatus: 'Offline', approvalStatus: 'rejected' }
+    )
   ]);
 
-  await User.deleteOne({ _id: userId });
+  await User.findByIdAndUpdate(userId, {
+    isDeleted: true,
+    deletedAt: new Date(),
+    suspendedAt: new Date(),
+    isAdminApproved: false
+  });
 };
 
 exports.getDashboardStats = async (req, res, next) => {
   try {
-    const totalUsers = await User.countDocuments({ role: 'user' });
-    const totalWorkers = await User.countDocuments({ role: 'worker' });
+    const activeUserFilter = { isDeleted: { $ne: true } };
+    const totalUsers = await User.countDocuments({ role: 'user', ...activeUserFilter });
+    const totalWorkers = await User.countDocuments({ role: 'worker', ...activeUserFilter });
     
     // Total pending from both WorkerProfile and User KYC
     const workerPending = await WorkerProfile.countDocuments({ approvalStatus: 'pending' });
-    const userPending = await User.countDocuments({ 'kyc.status': 'pending', role: 'user' });
+    const userPending = await User.countDocuments({ 'kyc.status': 'pending', role: 'user', ...activeUserFilter });
     const pendingApprovals = workerPending + userPending;
 
     const totalBookings = await Booking.countDocuments();
@@ -100,7 +91,10 @@ exports.getDashboardStats = async (req, res, next) => {
 exports.getPendingWorkers = async (req, res, next) => {
   try {
     // 1. Get Pending Workers
-    const workers = await WorkerProfile.find({ approvalStatus: 'pending' })
+    const activeWorkerUsers = await User.find({ role: 'worker', isDeleted: { $ne: true } }).select('_id').lean();
+    const activeWorkerUserIds = activeWorkerUsers.map((user) => user._id);
+
+    const workers = await WorkerProfile.find({ approvalStatus: 'pending', user: { $in: activeWorkerUserIds } })
       .populate('user', 'name email phone avatar location')
       .lean();
     
@@ -112,7 +106,7 @@ exports.getPendingWorkers = async (req, res, next) => {
     }));
 
     // 2. Get Pending User KYC
-    const users = await User.find({ 'kyc.status': 'pending', role: 'user' }).lean();
+    const users = await User.find({ 'kyc.status': 'pending', role: 'user', isDeleted: { $ne: true } }).lean();
     const formattedUsers = users.map(u => ({
       _id: u._id,
       user: u,
@@ -136,7 +130,7 @@ exports.getUsers = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
     const search = String(req.query.search || '').trim();
-    const filter = { role: 'user' };
+    const filter = { role: 'user', isDeleted: { $ne: true } };
 
     if (search) {
       const safeSearch = escapeRegex(search);
@@ -170,7 +164,8 @@ exports.getWorkers = async (req, res, next) => {
     const { page, limit, skip } = getPagination(req.query);
     const search = String(req.query.search || '').trim();
     const status = String(req.query.status || '').trim();
-    const filter = {};
+    const activeWorkerUsers = await User.find({ role: 'worker', isDeleted: { $ne: true } }).select('_id').lean();
+    const filter = { user: { $in: activeWorkerUsers.map((user) => user._id) } };
 
     if (['pending', 'approved', 'rejected'].includes(status)) {
       filter.approvalStatus = status;
@@ -180,6 +175,7 @@ exports.getWorkers = async (req, res, next) => {
       const safeSearch = escapeRegex(search);
       const matchingUsers = await User.find({
         role: 'worker',
+        isDeleted: { $ne: true },
         $or: [
           { name: { $regex: safeSearch, $options: 'i' } },
           { email: { $regex: safeSearch, $options: 'i' } },
@@ -386,7 +382,7 @@ exports.deleteUser = async (req, res, next) => {
       return res.status(400).json({ success: false, message: req.t('adminCannotDeleteSelf') });
     }
 
-    const user = await User.findOne({ _id: userId, role: 'user' }).lean();
+    const user = await User.findOne({ _id: userId, role: 'user', isDeleted: { $ne: true } }).lean();
     if (!user) {
       return res.status(404).json({ success: false, message: req.t('adminUserNotFound') });
     }
@@ -398,7 +394,7 @@ exports.deleteUser = async (req, res, next) => {
       });
     }
 
-    await deleteAccountData(user._id);
+    await softDeleteAccountData(user._id);
 
     await AuditLog.create({
       actor: req.user.id,
@@ -426,7 +422,7 @@ exports.deleteWorker = async (req, res, next) => {
       return res.status(404).json({ success: false, message: req.t('adminWorkerNotFound') });
     }
 
-    const workerUser = await User.findOne({ _id: workerProfile.user, role: 'worker' }).lean();
+    const workerUser = await User.findOne({ _id: workerProfile.user, role: 'worker', isDeleted: { $ne: true } }).lean();
     if (!workerUser) {
       return res.status(404).json({ success: false, message: req.t('adminWorkerAccountNotFound') });
     }
@@ -438,7 +434,7 @@ exports.deleteWorker = async (req, res, next) => {
       });
     }
 
-    await deleteAccountData(workerUser._id);
+    await softDeleteAccountData(workerUser._id);
 
     await AuditLog.create({
       actor: req.user.id,
@@ -512,7 +508,12 @@ exports.approveWorker = async (req, res, next) => {
         messageParams: { reason: rejectionReason || req.t('documentsUnclear') }
       });
     } catch (notificationError) {
-      console.error('Failed to send verification notification:', notificationError);
+      logger.warn('Failed to send verification notification', {
+        error: notificationError.message,
+        userId,
+        type,
+        status
+      });
     }
 
     await AuditLog.create({

@@ -1,6 +1,7 @@
 const WorkerProfile = require('../models/WorkerProfile');
 const User = require('../models/User');
 const { syncDynamicWorkerProfile } = require('../utils/syncWorkerProfile');
+const { getUploadedFilePayload } = require('../utils/uploadedFile');
 
 const VALID_AVAILABILITY_STATUSES = ['Available', 'Busy', 'Offline', 'Pending Verification'];
 
@@ -14,7 +15,7 @@ exports.getWorkerProfile = async (req, res, next) => {
   try {
     const profile = await WorkerProfile.findOne({ user: req.user.id }).populate('user', 'name email avatar phone');
     if (!profile) {
-      return res.status(404).json({ success: false, message: 'Profile not found' });
+      return res.status(404).json({ success: false, message: req.t('profileNotFound') });
     }
     res.status(200).json({ success: true, data: profile });
   } catch (error) {
@@ -41,7 +42,7 @@ exports.updateProfile = async (req, res, next) => {
     );
 
     if (!profile) {
-      return res.status(404).json({ success: false, message: 'Profile not found' });
+      return res.status(404).json({ success: false, message: req.t('profileNotFound') });
     }
 
     if (address || coordinates) {
@@ -65,16 +66,19 @@ exports.updateProfile = async (req, res, next) => {
 exports.uploadKYC = async (req, res, next) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: 'Please upload ID Proof' });
+      return res.status(400).json({ success: false, message: req.t('uploadIdProof') });
     }
 
-    const idProof = req.file;
+    const idProof = getUploadedFilePayload(req.file);
+    if (!idProof.url) {
+      return res.status(400).json({ success: false, message: req.t('uploadIdProof') });
+    }
 
     const profile = await WorkerProfile.findOneAndUpdate(
       { user: req.user.id },
       {
         kyc: {
-          idProof: { url: idProof.path, publicId: idProof.filename },
+          idProof,
           status: 'pending'
         }
       },
@@ -82,10 +86,10 @@ exports.uploadKYC = async (req, res, next) => {
     );
 
     if (!profile) {
-      return res.status(404).json({ success: false, message: 'Profile not found' });
+      return res.status(404).json({ success: false, message: req.t('profileNotFound') });
     }
 
-    res.status(200).json({ success: true, message: 'KYC submitted for approval', data: profile });
+    res.status(200).json({ success: true, message: req.t('workerKycSubmitted'), data: profile });
   } catch (error) {
     next(error);
   }

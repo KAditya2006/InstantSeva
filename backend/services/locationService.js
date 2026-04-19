@@ -1,4 +1,5 @@
 const CommonLocation = require('../models/CommonLocation');
+const logger = require('../utils/logger');
 
 /**
  * Saves a landmark or public area as a common location.
@@ -29,7 +30,7 @@ const saveCommonLocation = async (locationData) => {
       isGlobal
     });
   } catch (error) {
-    console.error('Error saving common location:', error);
+    logger.warn('Error saving common location', { error: error.message, name });
   }
 };
 

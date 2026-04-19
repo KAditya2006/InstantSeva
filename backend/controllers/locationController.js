@@ -28,7 +28,7 @@ exports.searchLocations = async (req, res, next) => {
     }
 
     if (typeof fetch !== 'function') {
-      return res.status(503).json({ success: false, message: 'Location search is not available on this server' });
+      return res.status(503).json({ success: false, message: req.t('locationSearchUnavailable') });
     }
 
     const cacheKey = getCacheKey({ query, limit });
@@ -56,7 +56,7 @@ exports.searchLocations = async (req, res, next) => {
     });
 
     if (!response.ok) {
-      return res.status(502).json({ success: false, message: 'Location search provider is unavailable' });
+      return res.status(502).json({ success: false, message: req.t('locationProviderUnavailable') });
     }
 
     const places = await response.json();

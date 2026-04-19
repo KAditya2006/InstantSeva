@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { getCurrentUser, uploadKYC as uploadWorkerKYC, uploadUserKYC } from '../services/api';
@@ -10,6 +11,7 @@ import { getDashboardPath, getOnboardingMessage, getVerificationSource } from '.
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Profile = () => {
+  const { t } = useTranslation();
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,16 +28,16 @@ const Profile = () => {
       setUser(data.user);
 
       if (data.user?.canAccessDashboard) {
-        if (!silent) toast.success('Verification approved. Opening your dashboard.');
+        if (!silent) toast.success(t('profile.verificationApproved'));
         navigate(getDashboardPath(data.user), { replace: true });
         return;
       }
 
-      if (!silent) toast.success('Profile status refreshed');
+      if (!silent) toast.success(t('profile.statusRefreshed'));
     } catch {
-      if (!silent) toast.error('Could not refresh profile status');
+      if (!silent) toast.error(t('profile.refreshFailed'));
     }
-  }, [navigate, setUser]);
+  }, [navigate, setUser, t]);
 
   useEffect(() => {
     if (user?.canAccessDashboard && isOnboardingVisit) {
@@ -57,7 +59,7 @@ const Profile = () => {
     e.preventDefault();
 
     if (!kycFiles.idProof) {
-      return toast.error('Please select an ID proof');
+      return toast.error(t('profile.selectIdProof'));
     }
 
     const formData = new FormData();
@@ -68,14 +70,13 @@ const Profile = () => {
       const uploadIdentity = user?.role === 'worker' ? uploadWorkerKYC : uploadUserKYC;
       const { data } = await uploadIdentity(formData);
 
-      toast.success(data.message || 'KYC submitted successfully!');
+      toast.success(data.message || t('profile.kycSubmitted'));
 
       const refreshed = await getCurrentUser();
       setUser(refreshed.data.user);
 
     } catch (error) {
-      console.error('User KYC Upload Error:', error);
-      toast.error(error.response?.data?.message || 'Verification upload failed');
+      toast.error(error.response?.data?.message || t('profile.verificationUploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -87,7 +88,7 @@ const Profile = () => {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
         <section className="bg-white rounded-3xl border border-slate-100 premium-shadow p-4 sm:p-8 flex flex-col md:flex-row gap-5 sm:gap-6 md:items-center justify-between">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 min-w-0">
-            <img src={user?.avatar || fallbackAvatar} onError={withImageFallback()} alt={user?.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl object-cover" />
+            <img src={user?.avatar || fallbackAvatar} onError={withImageFallback()} alt={user?.name || t('common.profile')} className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl object-cover" />
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 break-words">{user?.name}</h1>
               <p className="text-slate-500">{user?.email}</p>
@@ -110,7 +111,7 @@ const Profile = () => {
             onClick={() => navigate('/profile/edit')}
             className="px-6 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-all premium-shadow"
           >
-            Edit Profile
+            {t('profile.editProfile')}
           </button>
           <LanguageSwitcher />
         </section>
@@ -127,7 +128,7 @@ const Profile = () => {
               </div>
               <div>
                 <h2 className={`text-lg font-bold ${user?.canAccessDashboard ? 'text-emerald-950' : 'text-amber-950'}`}>
-                  {user?.canAccessDashboard ? 'Dashboard Unlocked' : 'Dashboard Locked Until Verification'}
+                  {user?.canAccessDashboard ? t('profile.dashboardUnlocked') : t('profile.dashboardLocked')}
                 </h2>
                 <p className={`font-medium ${user?.canAccessDashboard ? 'text-emerald-700' : 'text-amber-700'}`}>
                   {onboardingMessage}
@@ -139,7 +140,7 @@ const Profile = () => {
                 onClick={() => navigate(getDashboardPath(user))}
                 className="px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors"
               >
-                Open Dashboard
+                {t('profile.openDashboard')}
               </button>
             )}
             {!user?.canAccessDashboard && (
@@ -147,7 +148,7 @@ const Profile = () => {
                 onClick={refreshUserStatus}
                 className="px-6 py-3 rounded-xl bg-white border border-amber-200 text-amber-800 font-bold hover:bg-amber-100 transition-colors"
               >
-                Refresh Status
+                {t('profile.refreshStatus')}
               </button>
             )}
           </section>
@@ -156,7 +157,7 @@ const Profile = () => {
         <section className="bg-white rounded-3xl border border-slate-100 premium-shadow p-6 sm:p-8">
            <div className="flex items-center gap-3 mb-6">
               <ShieldCheck className="text-primary-600" />
-              <h2 className="text-2xl font-bold font-heading text-slate-900">Account Verification</h2>
+              <h2 className="text-2xl font-bold font-heading text-slate-900">{t('profile.accountVerification')}</h2>
            </div>
            
            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
@@ -171,21 +172,21 @@ const Profile = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900">
-                      {user?.canAccessDashboard ? 'Dashboard Access Approved' :
-                       verificationStatus === 'verified' ? 'Admin Approval Pending' : 
-                       verificationStatus === 'pending' ? 'Verification Pending' : 
-                       verificationStatus === 'rejected' ? 'Verification Rejected' : 'Verification Required'}
+                      {user?.canAccessDashboard ? t('profile.dashboardApproved') :
+                       verificationStatus === 'verified' ? t('profile.adminApprovalPending') : 
+                       verificationStatus === 'pending' ? t('profile.verificationPending') : 
+                       verificationStatus === 'rejected' ? t('profile.verificationRejected') : t('profile.verificationRequired')}
                     </h4>
                     <p className="text-sm text-slate-500 font-medium">
                        {user?.canAccessDashboard
-                          ? 'Your profile is verified. You can open your dashboard now.'
+                          ? t('profile.verifiedOpenDashboard')
                           : verificationStatus === 'verified' 
-                          ? 'Your document is verified. Admin approval is still required before dashboard access.' 
+                          ? t('profile.documentVerifiedAdminPending') 
                           : verificationStatus === 'pending' 
-                             ? 'Our team is reviewing your documents. You will get a notification once verified.' 
+                             ? t('profile.reviewingDocuments') 
                              : verificationStatus === 'rejected'
-                                ? `Reason: ${verification?.rejectionReason || 'Please provide clearer documents.'}`
-                                : 'Please upload your ID proof to unlock your dashboard.'}
+                                ? t('profile.rejectionReason', { reason: verification?.rejectionReason || t('profile.clearerDocuments') })
+                                : t('profile.uploadProofToUnlock')}
                     </p>
                   </div>
                 </div>
@@ -199,7 +200,7 @@ const Profile = () => {
                            {kycFiles.idProof ? <CheckCircle2 size={24} /> : <CalendarDays size={24} />}
                         </div>
                         <span className={`text-sm font-bold ${kycFiles.idProof ? 'text-emerald-700' : 'text-slate-500'}`}>
-                          {kycFiles.idProof ? kycFiles.idProof.name : 'Click to Choose ID Proof (Aadhaar/Passport/Driving License)'}
+                          {kycFiles.idProof ? kycFiles.idProof.name : t('profile.chooseIdProof')}
                         </span>
                         <input className="absolute inset-0 opacity-0 cursor-pointer" type="file" onChange={(e) => setKycFiles({...kycFiles, idProof: e.target.files[0]})} />
                       </label>
@@ -209,7 +210,7 @@ const Profile = () => {
                      disabled={uploading}
                      className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 premium-shadow"
                    >
-                     {uploading ? 'Uploading Documents...' : 'Submit Verification Documents'}
+                     {uploading ? t('profile.uploadingDocuments') : t('profile.submitVerificationDocuments')}
                    </button>
                 </form>
               )}
@@ -221,9 +222,9 @@ const Profile = () => {
             <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl mx-auto flex items-center justify-center mb-4">
               <ShieldCheck size={28} />
             </div>
-            <h2 className="text-2xl font-bold font-heading text-slate-900 mb-2">Dashboard Access Is Waiting</h2>
+            <h2 className="text-2xl font-bold font-heading text-slate-900 mb-2">{t('profile.dashboardWaiting')}</h2>
             <p className="text-slate-500 max-w-2xl mx-auto font-medium">
-              Complete your profile, upload verification, and wait for admin approval. Your bookings and dashboard tools will appear here after approval.
+              {t('profile.dashboardWaitingCopy')}
             </p>
           </section>
         )}

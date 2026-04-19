@@ -9,6 +9,7 @@ const { toPublicUser } = require('../utils/userAccess');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { normalizeLanguage } = require('../utils/languages');
+const logger = require('../utils/logger');
 
 const MAX_OTP_ATTEMPTS = 5;
 const MAX_PASSWORD_RESET_ATTEMPTS = 5;
@@ -134,7 +135,7 @@ exports.register = async (req, res, next) => {
         `
       });
     } catch (err) {
-      console.error('Email sending failed:', err);
+      logger.warn('Email verification OTP sending failed', { email: user.email, error: err.message });
       // Don't fail the registration if email fails, but notify
     }
 
@@ -199,7 +200,7 @@ exports.login = async (req, res, next) => {
     }
 
     const user = await User.findOne({ email: normalizedEmail }).select('+password');
-    if (!user || !(await user.comparePassword(password, user.password))) {
+    if (!user || user.isDeleted || !(await user.comparePassword(password, user.password))) {
       return res.status(401).json({ success: false, message: req.t('invalidCredentials') });
     }
 

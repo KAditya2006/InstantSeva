@@ -29,7 +29,7 @@ exports.getNotifications = async (req, res, next) => {
 exports.markNotificationsRead = async (req, res, next) => {
   try {
     await Notification.updateMany({ user: req.user.id, read: false }, { read: true });
-    res.status(200).json({ success: true, message: 'Notifications marked as read' });
+    res.status(200).json({ success: true, message: req.t('notificationsRead') });
   } catch (error) {
     next(error);
   }
@@ -52,7 +52,7 @@ exports.savePushSubscription = async (req, res, next) => {
     if (!isPushConfigured()) {
       return res.status(503).json({
         success: false,
-        message: 'Push notifications are not configured on the server'
+        message: req.t('pushNotConfigured')
       });
     }
 
@@ -60,7 +60,7 @@ exports.savePushSubscription = async (req, res, next) => {
     if (!endpoint || !keys?.p256dh || !keys?.auth) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid push subscription'
+        message: req.t('invalidPushSubscription')
       });
     }
 
@@ -90,11 +90,11 @@ exports.deletePushSubscription = async (req, res, next) => {
   try {
     const { endpoint } = req.body;
     if (!endpoint) {
-      return res.status(400).json({ success: false, message: 'Subscription endpoint is required' });
+      return res.status(400).json({ success: false, message: req.t('subscriptionEndpointRequired') });
     }
 
     await PushSubscription.deleteOne({ user: req.user.id, endpoint });
-    res.status(200).json({ success: true, message: 'Push subscription removed' });
+    res.status(200).json({ success: true, message: req.t('pushSubscriptionRemoved') });
   } catch (error) {
     next(error);
   }

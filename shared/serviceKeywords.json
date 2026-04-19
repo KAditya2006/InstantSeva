@@ -1,0 +1,23 @@
+{
+  "plumber": ["plumber", "plumbers", "plumbing", "pipe", "water leak", "tap repair", "प्लंबर", "नल", "पाइप", "কল মিস্ত্রি", "প্লাম্বার", "ప్లంబర్", "प्लम्बर", "பிளம்பர்", "پلمبر"],
+  "electrician": ["electrician", "electricians", "wiring", "switch", "fan repair", "light repair", "इलेक्ट्रीशियन", "बिजली", "বিদ্যুৎ মিস্ত্রি", "इलेक्ट्रिशियन", "எலக்ட்ரீஷியன்", "الیکٹریشن"],
+  "home tutors": ["home tutor", "home tutors", "teacher", "tuition", "study", "ट्यूटर", "होम ट्यूटर", "शिक्षक", "শিক্ষক", "টিউটর", "ஆசிரியர்", "ٹیوٹر"],
+  "carpenters": ["carpenter", "carpenters", "wood work", "furniture repair", "कारपेंटर", "बढ़ई", "लकड़ी", "কাঠ মিস্ত্রি", "સુથાર", "தச்சர்"],
+  "painters": ["painter", "painters", "painting", "wall paint", "पेंटर", "रंगाई", "রং মিস্ত্রি", "চিত্রকর", "పెయింటర్", "பெயிண்டர்"],
+  "house cleaner": ["cleaner", "house cleaner", "cleaning", "maid", "deep cleaning", "सफाई", "घर की सफाई", "ক্লিনিং", "வீட்டு சுத்தம்", "صفائی"],
+  "ac repair/service": ["ac", "ac repair", "air conditioner", "cooling", "एसी", "एसी रिपेयर", "एयर कंडीशनर", "এসি", "ஏசி", "اے سی"],
+  "appliances repair/service": ["appliance", "appliances", "washing machine", "fridge", "refrigerator", "mixer", "appliance repair", "मशीन रिपेयर", "फ्रिज", "ওয়াশিং মেশিন", "குளிர்சாதன பெட்டி"],
+  "laptop/mobile repair": ["laptop", "mobile", "phone repair", "screen repair", "computer repair", "मोबाइल", "लैपटॉप", "फोन रिपेयर", "মোবাইল", "லேப்டாப்"],
+  "internet technician": ["internet", "wifi", "broadband", "router", "network", "वाईफाई", "इंटरनेट", "ব্রডব্যান্ড", "இணையம்", "انٹرنیٹ"],
+  "driver": ["driver", "car driver", "cab driver", "ड्राइवर", "चालक", "ড্রাইভার", "ஓட்டுநர்", "ڈرائیور"],
+  "cook": ["cook", "chef", "home cook", "food", "कुक", "रसोइया", "बावर्ची", "রাঁধুনি", "சமையல்காரர்", "باورچی"],
+  "babysitter": ["babysitter", "baby sitter", "nanny", "child care", "बेबीसिटर", "आया", "শিশু পরিচর্যা", "குழந்தை பராமரிப்பு"],
+  "caretaker": ["caretaker", "care taker", "elder care", "patient care", "देखभाल", "केयरटेकर", "নার্সিং", "பராமரிப்பு"],
+  "pharmacist": ["pharmacist", "medicine", "medical store", "दवा", "फार्मासिस्ट", "ওষুধ", "மருந்து", "دوا"],
+  "door/lock repair": ["lock", "door lock", "key", "locksmith", "ताला", "चाबी", "লক", "சாவி", "تالا"],
+  "tv repair": ["tv", "television", "led tv", "टीवी", "टेलीविजन", "টিভি", "டிவி", "ٹی وی"],
+  "glass repair": ["glass", "mirror", "window glass", "शीशा", "कांच", "গ্লাস", "கண்ணாடி", "شیشہ"],
+  "pest control": ["pest", "pest control", "termite", "cockroach", "कीट", "पेस्ट कंट्रोल", "পোকা", "பூச்சி கட்டுப்பாடு"],
+  "gardening": ["garden", "gardening", "gardener", "plant care", "माली", "बागवानी", "বাগান", "தோட்டம்"],
+  "home decor": ["decor", "home decor", "interior", "decoration", "सजावट", "होम डेकोर", "সাজসজ্জা", "வீட்டு அலங்காரம்"]
+}

@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { approveWorker, createAdminUser, createAdminWorker, deleteAdminUser, deleteAdminWorker, getAdminBookings, getAdminStats, getAdminUsers, getAdminWorkers, getAuditLogs, getPendingWorkers } from '../services/api';
 import Navbar from '../components/Navbar';
-import { ShieldAlert, Users, CheckCircle, XCircle, Eye, Search, TrendingUp, Clock, Briefcase, CalendarDays, Plus, Trash2 } from 'lucide-react';
+import { ShieldAlert, Users, CheckCircle, XCircle, Eye, Search, TrendingUp, Clock, Briefcase, CalendarDays, Plus, Trash2, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { fallbackAvatar, withImageFallback } from '../utils/images';
+import { fallbackAvatar, getInlineDocumentPreviewUrl, isPdfAsset, resolveAssetUrl, withImageFallback } from '../utils/images';
 import { formatInr } from '../utils/formatters';
 import { PROFESSIONS } from '../constants/professions';
 
@@ -400,9 +400,7 @@ const AdminDashboard = () => {
                    <div className="space-y-4">
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Uploaded ID Proof</p>
                       <div className="aspect-4/3 rounded-3xl overflow-hidden border-4 border-slate-50 bg-slate-100 flex items-center justify-center">
-                         {selectedWorker.kyc?.idProof?.url ? (
-                           <img src={selectedWorker.kyc.idProof.url} className="w-full h-full object-contain" alt="ID Proof" />
-                         ) : <span className="text-slate-300 font-bold italic">No document uploaded</span>}
+                         <DocumentPreview url={selectedWorker.kyc?.idProof?.url} label="ID Proof" />
                       </div>
                    </div>
                    
@@ -410,9 +408,7 @@ const AdminDashboard = () => {
                      <div className="space-y-4">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Uploaded Selfie</p>
                         <div className="aspect-4/3 rounded-3xl overflow-hidden border-4 border-slate-50 bg-slate-100 flex items-center justify-center">
-                           {selectedWorker.kyc?.selfie?.url ? (
-                             <img src={selectedWorker.kyc.selfie.url} className="w-full h-full object-contain" alt="Selfie" />
-                           ) : <span className="text-slate-300 font-bold italic">No document uploaded</span>}
+                           <DocumentPreview url={selectedWorker.kyc?.selfie?.url} label="Selfie" />
                         </div>
                      </div>
                    )}
@@ -467,6 +463,58 @@ const AdminDashboard = () => {
         )}
       </div>
     </div>
+  );
+};
+
+const DocumentPreview = ({ url, label }) => {
+  const [failedPreviewUrl, setFailedPreviewUrl] = useState('');
+  const documentUrl = resolveAssetUrl(url);
+  const previewUrl = getInlineDocumentPreviewUrl(documentUrl);
+  const previewFailed = failedPreviewUrl === previewUrl;
+  const shouldRenderPdfFrame = isPdfAsset(documentUrl) && previewUrl === documentUrl;
+
+  if (!documentUrl) {
+    return <span className="text-slate-300 font-bold italic">No document uploaded</span>;
+  }
+
+  if (previewFailed) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center text-slate-500">
+        <FileText size={46} className="text-primary-500" />
+        <span className="text-sm font-black uppercase tracking-widest">{label}</span>
+        <span className="max-w-xs text-xs font-bold text-slate-400">
+          This document could not be previewed inline. Please upload a clear JPG, PNG, or PDF file.
+        </span>
+      </div>
+    );
+  }
+
+  if (shouldRenderPdfFrame) {
+    return (
+      <object
+        data={documentUrl}
+        type="application/pdf"
+        className="h-full w-full bg-white"
+        aria-label={label}
+      >
+        <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center text-slate-500">
+          <FileText size={46} className="text-primary-500" />
+          <span className="text-sm font-black uppercase tracking-widest">{label}</span>
+          <span className="max-w-xs text-xs font-bold text-slate-400">
+            Preview is not available for this document type on this browser.
+          </span>
+        </div>
+      </object>
+    );
+  }
+
+  return (
+    <img
+      src={previewUrl}
+      className="h-full w-full object-contain"
+      alt={label}
+      onError={() => setFailedPreviewUrl(previewUrl)}
+    />
   );
 };
 

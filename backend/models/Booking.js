@@ -25,11 +25,21 @@ const bookingSchema = new mongoose.Schema({
     default: 'pending'
   },
   startOTP: String,
+  startOTPExpiresAt: Date,
+  startOTPAttempts: {
+    type: Number,
+    default: 0
+  },
   startOTPVerified: {
     type: Boolean,
     default: false
   },
   completionOTP: String,
+  completionOTPExpiresAt: Date,
+  completionOTPAttempts: {
+    type: Number,
+    default: 0
+  },
   completionOTPVerified: {
     type: Boolean,
     default: false

@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const { getMissingEnv, OPTIONAL_SERVICE_GROUPS, REQUIRED_IN_PRODUCTION } = require('./config/validateEnv');
 const { getAllowedOrigins, isAllowedOrigin } = require('./utils/allowedOrigins');
 const languageMiddleware = require('./middleware/languageMiddleware');
+const logger = require('./utils/logger');
 
 const app = express();
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
@@ -99,7 +100,7 @@ app.use('/api/user', userRoutes);
 app.use('/api', (req, res) => {
   res.status(404).json({
     success: false,
-    message: 'API route not found'
+    message: req.t('apiRouteNotFound')
   });
 });
 
@@ -147,7 +148,7 @@ if (hasFrontendBuild) {
  */
 app.use((err, req, res, next) => {
   if (process.env.NODE_ENV !== 'test') {
-    console.error('API Error:', err.message);
+    logger.error('API Error', { message: err.message, path: req.originalUrl });
   }
   const status = err.statusCode || 500;
   const isServerError = status >= 500;

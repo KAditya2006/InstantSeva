@@ -1,5 +1,6 @@
 const webpush = require('web-push');
 const PushSubscription = require('../models/PushSubscription');
+const logger = require('../utils/logger');
 
 let configured = false;
 
@@ -66,9 +67,7 @@ const sendPushNotificationToUser = async ({ user, notification }) => {
       await webpush.sendNotification(normalizeSubscription(subscription), payload);
     } catch (error) {
       await removeExpiredSubscription(subscription, error);
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Push notification failed:', error.message);
-      }
+      logger.dev('Push notification failed', { error: error.message, user });
     }
   }));
 };

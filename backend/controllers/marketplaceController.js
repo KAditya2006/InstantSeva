@@ -1,5 +1,6 @@
 const WorkerProfile = require('../models/WorkerProfile');
 const Review = require('../models/Review');
+const User = require('../models/User');
 const { getPagination } = require('../utils/bookingRules');
 const escapeRegex = require('../utils/escapeRegex');
 const { normalizeServiceSearch } = require('../utils/serviceKeywords');
@@ -94,7 +95,9 @@ exports.searchWorkers = async (req, res, next) => {
     const { service, q, minRating, maxPrice } = req.query;
     const { page, limit, skip } = getPagination(req.query);
     const origin = getSearchOrigin(req.query);
+    const activeWorkers = await User.find({ role: 'worker', isDeleted: { $ne: true } }).select('_id').lean();
     const filter = {
+      user: { $in: activeWorkers.map((worker) => worker._id) },
       approvalStatus: 'approved',
       availabilityStatus: { $ne: 'Offline' }
     };
@@ -121,7 +124,7 @@ exports.searchWorkers = async (req, res, next) => {
     }
 
     const query = WorkerProfile.find(filter)
-      .populate('user', 'name email avatar phone location')
+      .populate('user', 'name email avatar phone location isDeleted')
       .sort({ averageRating: -1, totalReviews: -1, updatedAt: -1 });
 
     if (!origin) {
@@ -148,10 +151,10 @@ exports.getWorkerDetails = async (req, res, next) => {
     const worker = await WorkerProfile.findOne({
       user: req.params.workerId,
       approvalStatus: 'approved'
-    }).populate('user', 'name email avatar phone location');
+    }).populate('user', 'name email avatar phone location isDeleted');
 
-    if (!worker) {
-      return res.status(404).json({ success: false, message: 'Worker not found' });
+    if (!worker || worker.user?.isDeleted) {
+      return res.status(404).json({ success: false, message: req.t('workerNotFound') });
     }
 
     const reviews = await Review.find({ worker: req.params.workerId })
