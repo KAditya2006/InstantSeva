@@ -236,18 +236,18 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 min-w-0">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 min-w-0">
+          <div className="min-w-0">
             <h1 className="text-3xl sm:text-4xl font-bold font-heading text-slate-900 tracking-tight">Platform Control</h1>
             <p className="text-slate-500 font-medium">Overview of your marketplace health and approvals.</p>
           </div>
-          <div className="flex w-full sm:w-auto bg-white p-1 rounded-2xl premium-shadow border border-slate-100">
-             <button onClick={() => setActiveTab('overview')} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'overview' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Overview</button>
-             <button onClick={() => openDirectory('users')} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'users' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Users</button>
-             <button onClick={() => openDirectory('workers')} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'workers' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Workers</button>
-             <button onClick={() => openDirectory('bookings')} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'bookings' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Bookings</button>
-             <button onClick={() => setActiveTab('audit')} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'audit' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Audit Logs</button>
+          <div className="flex w-full sm:w-auto max-w-full overflow-x-auto bg-white p-1 rounded-2xl premium-shadow border border-slate-100">
+             <button onClick={() => setActiveTab('overview')} className={`shrink-0 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'overview' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Overview</button>
+             <button onClick={() => openDirectory('users')} className={`shrink-0 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'users' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Users</button>
+             <button onClick={() => openDirectory('workers')} className={`shrink-0 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'workers' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Workers</button>
+             <button onClick={() => openDirectory('bookings')} className={`shrink-0 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'bookings' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Bookings</button>
+             <button onClick={() => setActiveTab('audit')} className={`shrink-0 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'audit' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Audit Logs</button>
           </div>
         </header>
 
@@ -270,7 +270,7 @@ const AdminDashboard = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full min-w-[760px] text-left">
               <thead>
                 <tr className="bg-slate-50/50 text-slate-400 text-[11px] uppercase tracking-[0.2em] font-bold">
                   <th className="px-8 py-5">Applicant Details</th>
@@ -584,7 +584,7 @@ const AdminDirectory = ({ activeTab, data, loading, pagination, searchTerm, setS
 };
 
 const UsersTable = ({ users, onDelete }) => (
-  <table className="w-full text-left">
+  <table className="w-full min-w-[760px] text-left">
     <thead>
       <tr className="bg-slate-50/50 text-slate-400 text-[11px] uppercase tracking-[0.2em] font-bold">
         <th className="px-8 py-5">User</th>
@@ -634,7 +634,7 @@ const UsersTable = ({ users, onDelete }) => (
 );
 
 const WorkersTable = ({ workers, onDelete }) => (
-  <table className="w-full text-left">
+  <table className="w-full min-w-[760px] text-left">
     <thead>
       <tr className="bg-slate-50/50 text-slate-400 text-[11px] uppercase tracking-[0.2em] font-bold">
         <th className="px-8 py-5">Worker</th>
@@ -685,7 +685,7 @@ const WorkersTable = ({ workers, onDelete }) => (
 );
 
 const BookingsTable = ({ bookings }) => (
-  <table className="w-full text-left">
+  <table className="w-full min-w-[760px] text-left">
     <thead>
       <tr className="bg-slate-50/50 text-slate-400 text-[11px] uppercase tracking-[0.2em] font-bold">
         <th className="px-8 py-5">Service</th>

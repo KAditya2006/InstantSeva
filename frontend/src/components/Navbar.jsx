@@ -91,7 +91,7 @@ const Navbar = () => {
 
   return (
     <nav className="glass sticky top-0 z-50 w-full border-b border-gray-100">
-      <div className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
+      <div className="w-full px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
         <Link to="/" className="shrink-0" aria-label="InstantSeva home">
           <BrandLogo />
         </Link>
@@ -107,10 +107,10 @@ const Navbar = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-4">
           <LanguageSwitcher compact className="hidden md:inline-flex" />
           {token ? (
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-4">
             <div className="relative">
               <button onClick={handleNotificationOpen} className="p-2 text-slate-400 hover:text-primary-600 transition-colors relative" title={t('common.notifications')}>
                 <Bell size={20} />
@@ -174,7 +174,7 @@ const Navbar = () => {
                 {t('common.adminPanel')}
               </Link>
             )}
-            <button onClick={logout} className="p-2 text-slate-400 hover:text-rose-500 transition-colors" title={t('common.logout')}>
+            <button onClick={logout} className="hidden sm:inline-flex p-2 text-slate-400 hover:text-rose-500 transition-colors" title={t('common.logout')}>
               <LogOut size={20} />
             </button>
             <Link to="/profile" className="w-10 h-10 rounded-full border-2 border-primary-100 overflow-hidden hover:scale-105 transition-transform">
@@ -210,6 +210,7 @@ const Navbar = () => {
           {user?.role === 'user' && <Link onClick={() => setMobileOpen(false)} to={user?.canAccessDashboard ? '/dashboard' : '/profile'} className="rounded-xl bg-white/70 px-4 py-3">{user?.canAccessDashboard ? t('common.dashboard') : t('common.completeProfile')}</Link>}
           {user?.role === 'admin' && <Link onClick={() => setMobileOpen(false)} to="/admin/dashboard" className="rounded-xl bg-white/70 px-4 py-3">{t('common.adminPanel')}</Link>}
           {token && <Link onClick={() => setMobileOpen(false)} to="/profile" className="rounded-xl bg-white/70 px-4 py-3">{t('common.profile')}</Link>}
+          {token && <button onClick={() => { setMobileOpen(false); logout(); }} className="rounded-xl bg-rose-50 text-rose-600 px-4 py-3 text-left">{t('common.logout')}</button>}
         </div>
       )}
     </nav>

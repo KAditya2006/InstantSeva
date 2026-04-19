@@ -18,10 +18,63 @@
   --color-primary-900: #4c1d95;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  width: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: white;
   color: #1e293b;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe,
+object {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a,
+button,
+span,
+td,
+th {
+  overflow-wrap: anywhere;
+}
+
+table {
+  max-width: 100%;
 }
 
 [dir="rtl"] body,

@@ -224,8 +224,8 @@ const SearchPage = () => {
           <p className="text-slate-500 mt-2">{t('search.subtitle')}</p>
         </section>
 
-        <form onSubmit={fetchWorkers} className="bg-white border border-slate-100 premium-shadow rounded-3xl p-3 sm:p-4 grid lg:grid-cols-[1fr_auto_180px_180px_auto] gap-3">
-          <div className="flex items-center gap-3 bg-slate-50 rounded-2xl px-4">
+        <form onSubmit={fetchWorkers} className="bg-white border border-slate-100 premium-shadow rounded-3xl p-3 sm:p-4 grid lg:grid-cols-[minmax(0,1fr)_auto_180px_180px_auto] gap-3 min-w-0">
+          <div className="flex items-center gap-3 bg-slate-50 rounded-2xl px-4 min-w-0">
             <SearchIcon size={18} className="text-slate-400" />
             <input
               value={filters.service}
@@ -300,8 +300,8 @@ const SearchPage = () => {
             const presenceStatus = getUserPresenceStatus(worker.user);
 
             return (
-            <article key={worker._id} className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 premium-shadow flex flex-col gap-5">
-              <div className="flex gap-4">
+            <article key={worker._id} className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 premium-shadow flex flex-col gap-5 min-w-0">
+              <div className="flex gap-4 min-w-0">
                 <img 
                   src={worker.user?.avatar || fallbackAvatar} 
                   onError={withImageFallback()} 
@@ -338,7 +338,7 @@ const SearchPage = () => {
                 <span className="flex items-start gap-1 min-w-0"><MapPin size={16} className="mt-0.5 shrink-0" /> <span className="break-words">{worker.user?.location?.address || t('common.nearby')}</span></span>
                 <span className="font-bold text-slate-900">{formatInr(worker.pricing?.amount)}/{worker.pricing?.unit || 'hour'}</span>
               </div>
-              <div className="grid grid-cols-2 gap-3 mt-auto">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 mt-auto">
                 <button onClick={() => handleChat(worker)} className="border border-slate-200 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50">
                   <MessageSquare size={18} /> {t('common.chat')}
                 </button>
@@ -378,7 +378,7 @@ const SearchPage = () => {
               onChange={({ address, coordinates }) => setBooking({ ...booking, address, coordinates })}
             />
             <textarea value={booking.additionalNotes} onChange={(e) => setBooking({ ...booking, additionalNotes: e.target.value })} placeholder={t('search.notes')} className="w-full h-28 bg-slate-50 rounded-2xl px-4 py-4 outline-none" />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button type="button" onClick={() => setSelectedWorker(null)} className="border border-slate-200 py-3 rounded-2xl font-bold">{t('common.cancel')}</button>
               <button className="bg-primary-600 text-white py-3 rounded-2xl font-bold">{t('common.sendRequest')}</button>
             </div>

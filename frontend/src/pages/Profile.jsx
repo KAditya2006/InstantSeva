@@ -85,10 +85,10 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
-        <section className="bg-white rounded-3xl border border-slate-100 premium-shadow p-4 sm:p-8 flex flex-col md:flex-row gap-5 sm:gap-6 md:items-center justify-between">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8 min-w-0">
+        <section className="bg-white rounded-3xl border border-slate-100 premium-shadow p-4 sm:p-8 flex flex-col md:flex-row gap-5 sm:gap-6 md:items-center justify-between min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 min-w-0">
-            <img src={user?.avatar || fallbackAvatar} onError={withImageFallback()} alt={user?.name || t('common.profile')} className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl object-cover" />
+            <img src={user?.avatar || fallbackAvatar} onError={withImageFallback()} alt={user?.name || t('common.profile')} className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-2xl sm:rounded-3xl object-cover" />
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 break-words">{user?.name}</h1>
               <p className="text-slate-500">{user?.email}</p>
@@ -109,11 +109,11 @@ const Profile = () => {
           </div>
           <button 
             onClick={() => navigate('/profile/edit')}
-            className="px-6 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-all premium-shadow"
+            className="w-full md:w-auto px-6 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-all premium-shadow"
           >
             {t('profile.editProfile')}
           </button>
-          <LanguageSwitcher />
+          <LanguageSwitcher className="w-full justify-between md:w-auto" />
         </section>
 
         {user?.role !== 'admin' && (
@@ -122,7 +122,7 @@ const Profile = () => {
               ? 'bg-emerald-50 border-emerald-200'
               : 'bg-amber-50 border-amber-200'
           }`}>
-            <div className="flex items-start gap-4">
+            <div className="flex min-w-0 items-start gap-4">
               <div className={`p-3 rounded-2xl ${user?.canAccessDashboard ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
                 {user?.canAccessDashboard ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
               </div>
@@ -138,7 +138,7 @@ const Profile = () => {
             {user?.canAccessDashboard && user?.role !== 'admin' && (
               <button
                 onClick={() => navigate(getDashboardPath(user))}
-                className="px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors"
+                className="w-full md:w-auto px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors"
               >
                 {t('profile.openDashboard')}
               </button>
@@ -146,7 +146,7 @@ const Profile = () => {
             {!user?.canAccessDashboard && (
               <button
                 onClick={refreshUserStatus}
-                className="px-6 py-3 rounded-xl bg-white border border-amber-200 text-amber-800 font-bold hover:bg-amber-100 transition-colors"
+                className="w-full md:w-auto px-6 py-3 rounded-xl bg-white border border-amber-200 text-amber-800 font-bold hover:bg-amber-100 transition-colors"
               >
                 {t('profile.refreshStatus')}
               </button>

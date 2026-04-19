@@ -92,7 +92,7 @@ const EditProfile = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 min-w-0">
         <button 
           onClick={() => navigate('/profile')}
           className="flex items-center gap-2 text-slate-500 hover:text-primary-600 font-bold mb-8 transition-colors"
@@ -100,9 +100,9 @@ const EditProfile = () => {
           <ArrowLeft size={20} /> {t('editProfile.backToProfile')}
         </button>
 
-        <div className="bg-white rounded-3xl border border-slate-100 premium-shadow p-6 sm:p-10">
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-            <div>
+        <div className="bg-white rounded-3xl border border-slate-100 premium-shadow p-5 sm:p-10 min-w-0">
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 min-w-0">
+            <div className="min-w-0">
               <h1 className="text-3xl font-bold font-heading text-slate-900">{t('profile.editProfile')}</h1>
               <p className="text-slate-500 mt-1">{t('editProfile.subtitle')}</p>
             </div>

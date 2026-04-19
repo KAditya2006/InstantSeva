@@ -299,9 +299,9 @@ const ChatPage = () => {
     <div className="min-h-screen md:h-screen flex flex-col bg-slate-50 md:overflow-hidden">
       <Navbar />
 
-      <main className="flex-1 flex flex-col md:flex-row md:overflow-hidden p-3 sm:p-6 gap-4 sm:gap-6 min-h-0">
+      <main className="flex-1 flex flex-col md:flex-row md:overflow-hidden p-3 sm:p-6 gap-4 sm:gap-6 min-h-0 min-w-0">
         {/* Chat List */}
-        <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[380px] bg-white rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100 flex-col overflow-hidden min-h-[60vh] md:min-h-0`}>
+        <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[380px] md:shrink-0 bg-white rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100 flex-col overflow-hidden min-h-[60vh] md:min-h-0 min-w-0`}>
           <div className="p-4 sm:p-8 border-b border-slate-50">
             <h1 className="text-2xl font-bold font-heading text-slate-900 mb-6">{t('chat.messages')}</h1>
             <div className="relative">
@@ -320,7 +320,7 @@ const ChatPage = () => {
               <div 
                 key={chat._id} 
                 onClick={() => handleChatSelect(chat)}
-                className={`p-6 flex items-center gap-4 cursor-pointer transition-all border-l-4 ${activeChat?._id === chat._id ? 'bg-primary-50/50 border-primary-600 shadow-sm' : 'border-transparent hover:bg-slate-50'}`}
+                className={`p-4 sm:p-6 flex items-center gap-3 sm:gap-4 cursor-pointer transition-all border-l-4 min-w-0 ${activeChat?._id === chat._id ? 'bg-primary-50/50 border-primary-600 shadow-sm' : 'border-transparent hover:bg-slate-50'}`}
               >
                 <div className="relative">
                   <img
@@ -354,7 +354,7 @@ const ChatPage = () => {
         </div>
 
         {/* Chat Window */}
-        <div className={`${activeChat ? 'flex' : 'hidden md:flex'} flex-1 bg-white rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100 flex-col overflow-hidden relative min-h-[75vh] md:min-h-0`}>
+        <div className={`${activeChat ? 'flex' : 'hidden md:flex'} flex-1 bg-white rounded-3xl md:rounded-[40px] premium-shadow border border-slate-100 flex-col overflow-hidden relative min-h-[75svh] md:min-h-0 min-w-0`}>
           {activeChat ? (
             (() => {
               const activeParticipant = getOtherParticipant(activeChat, user.id);
@@ -364,7 +364,7 @@ const ChatPage = () => {
             <>
               {/* Window Header */}
               <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-50 flex justify-between items-center gap-3 bg-white/80 backdrop-blur-md sticky top-0 z-10">
-                <div className="flex items-center gap-4">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                   <button onClick={() => setActiveChat(null)} className="md:hidden text-slate-400 font-bold text-xl">{t('chat.back')}</button>
                   <img
                     src={activeParticipant?.avatar || fallbackAvatar}
@@ -372,7 +372,7 @@ const ChatPage = () => {
                     className="w-12 h-12 rounded-2xl object-cover" 
                     alt={t('chat.activeAvatar')} 
                   />
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="font-bold text-slate-900 text-base sm:text-lg truncate max-w-[150px] sm:max-w-none">{activeParticipant?.name}</h3>
                     <div className="flex items-center gap-2">
                        <div className={`w-2 h-2 ${getPresenceDotClass(activeParticipantOnline)} rounded-full ${activeParticipantOnline ? 'animate-pulse' : ''}`}></div>
@@ -426,7 +426,7 @@ const ChatPage = () => {
 
               {/* Message Input */}
               <div className="p-3 sm:p-8 bg-white border-t border-slate-50">
-                 <form onSubmit={handleSend} className="bg-slate-50 p-2 rounded-2xl sm:rounded-[32px] border border-slate-100 flex items-center gap-2 premium-shadow focus-within:border-primary-400 focus-within:bg-white transition-all">
+                 <form onSubmit={handleSend} className="bg-slate-50 p-2 rounded-2xl sm:rounded-[32px] border border-slate-100 flex items-center gap-1.5 sm:gap-2 premium-shadow focus-within:border-primary-400 focus-within:bg-white transition-all min-w-0">
                     <label className="p-3 text-slate-400 hover:text-primary-600 cursor-pointer transition-colors">
                        <ImageIcon size={22} />
                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
@@ -434,7 +434,7 @@ const ChatPage = () => {
                     <input 
                       type="text" 
                       placeholder={t('chat.writeMessage')} 
-                      className="flex-1 bg-transparent outline-none px-4 py-2 font-medium text-slate-900"
+                      className="min-w-0 flex-1 bg-transparent outline-none px-2 sm:px-4 py-2 font-medium text-slate-900"
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                     />

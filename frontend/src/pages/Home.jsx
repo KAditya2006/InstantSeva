@@ -66,10 +66,10 @@ const Home = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative min-h-[620px] sm:min-h-[650px] flex items-center justify-center overflow-hidden bg-white py-16">
+      <section className="relative min-h-[calc(100svh-72px)] sm:min-h-[650px] flex items-center justify-center overflow-hidden bg-white py-12 sm:py-16">
         {/* Background Gradients */}
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary-100/50 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-50 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] right-[-10%] h-[min(500px,80vw)] w-[min(500px,80vw)] bg-primary-100/50 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[-10%] h-[min(500px,80vw)] w-[min(500px,80vw)] bg-indigo-50 rounded-full blur-[100px]" />
 
         <div className="relative z-10 text-center max-w-4xl px-4 sm:px-6">
           <Motion.div
@@ -85,9 +85,9 @@ const Home = () => {
             </p>
 
             {/* Search Bar */}
-            <form onSubmit={handleSearch} className="bg-white p-2 rounded-2xl premium-shadow flex flex-col md:flex-row items-center gap-2 max-w-3xl mx-auto border border-slate-100">
+            <form onSubmit={handleSearch} className="bg-white p-2 rounded-2xl premium-shadow flex flex-col md:flex-row items-stretch md:items-center gap-2 max-w-3xl mx-auto border border-slate-100 min-w-0">
               <div className="flex-1 w-full flex items-center gap-3 px-4 py-3">
-                <Search className="text-slate-400" size={20} />
+                <Search className="text-slate-400 shrink-0" size={20} />
                 <input 
                   type="text" 
                   placeholder="What service do you need?" 
@@ -102,7 +102,7 @@ const Home = () => {
               />
               <div className="w-[2px] h-8 bg-slate-100 hidden md:block" />
               <div className="flex-1 w-full flex items-center gap-3 px-4 py-3">
-                <MapPin className="text-slate-400" size={20} />
+                <MapPin className="text-slate-400 shrink-0" size={20} />
                 <input 
                   type="text" 
                   placeholder="Enter location" 
@@ -135,7 +135,7 @@ const Home = () => {
               <div className="p-4 bg-white rounded-2xl premium-shadow transform group-hover:scale-110 transition-transform">
                 {React.cloneElement(cat.icon, { size: 32 })}
               </div>
-              <span className="font-bold text-slate-800 tracking-tight">{t(`services.${cat.slug}`, { defaultValue: cat.name })}</span>
+              <span className="text-center font-bold text-slate-800 tracking-tight leading-snug">{t(`services.${cat.slug}`, { defaultValue: cat.name })}</span>
             </Motion.div>
           ))}
         </div>

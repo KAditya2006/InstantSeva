@@ -128,7 +128,7 @@ const TrackingMap = ({
   }
 
   return (
-    <div className="relative w-full h-[400px] rounded-[32px] overflow-hidden border border-slate-100 premium-shadow">
+    <div className="relative w-full h-[280px] sm:h-[360px] lg:h-[400px] rounded-3xl md:rounded-[32px] overflow-hidden border border-slate-100 premium-shadow">
       <MapContainer center={center} zoom={15} className="w-full h-full">
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -152,7 +152,7 @@ const TrackingMap = ({
           </>
         )}
       </MapContainer>
-      <div className="absolute bottom-4 left-4 right-4 z-[1000] flex gap-2">
+      <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 z-[1000] flex gap-2">
          <a 
            href={`https://www.google.com/maps/dir/?api=1&destination=${destinationPos[0]},${destinationPos[1]}`}
            target="_blank"

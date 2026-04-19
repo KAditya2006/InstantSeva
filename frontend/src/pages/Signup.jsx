@@ -51,10 +51,10 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row overflow-x-hidden">
       {/* Left Decoration */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary-600 p-10 xl:p-12 flex-col justify-between relative overflow-hidden">
-        <div className="absolute top-[-20%] right-[-20%] w-[600px] h-[600px] bg-white/10 rounded-full blur-[100px]" />
+        <div className="absolute top-[-20%] right-[-20%] h-[min(600px,80vw)] w-[min(600px,80vw)] bg-white/10 rounded-full blur-[100px]" />
         <div className="relative z-10">
           <Link to="/" className="inline-flex" aria-label="InstantSeva home">
             <BrandLogo light />
@@ -81,8 +81,8 @@ const Signup = () => {
       </div>
 
       {/* Right Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-12">
-        <div className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-12 min-w-0">
+        <div className="w-full max-w-md min-w-0">
           <div className="mb-8 sm:mb-10 text-center lg:text-left">
             <h3 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mb-2">{t('auth.createAccount')}</h3>
             <p className="text-slate-500">{t('auth.joinText')}</p>
@@ -215,7 +215,7 @@ const Signup = () => {
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="relative">
                       <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 

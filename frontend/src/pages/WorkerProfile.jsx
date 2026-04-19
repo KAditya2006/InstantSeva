@@ -88,11 +88,11 @@ const WorkerProfile = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-6 lg:gap-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] gap-6 lg:gap-8 min-w-0">
         <section className="space-y-6 min-w-0">
           <div className="bg-white border border-slate-100 premium-shadow rounded-3xl p-4 sm:p-8">
             <div className="flex flex-col md:flex-row gap-5 sm:gap-6">
-              <img src={worker.user?.avatar || fallbackAvatar} onError={withImageFallback()} alt={worker.user?.name} className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl object-cover" />
+              <img src={worker.user?.avatar || fallbackAvatar} onError={withImageFallback()} alt={worker.user?.name} className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl sm:rounded-3xl object-cover" />
               <div className="space-y-3 min-w-0">
                 <h1 className="text-3xl sm:text-4xl font-bold font-heading text-slate-900 break-words">{worker.user?.name}</h1>
                 <p className="flex items-center gap-2 text-amber-500 font-bold"><Star fill="currentColor" size={18} /> {worker.averageRating?.toFixed(1) || '0.0'} ({t('workerProfile.reviewCount', { count: worker.totalReviews || 0 })})</p>
@@ -127,7 +127,7 @@ const WorkerProfile = () => {
           </div>
         </section>
 
-        <aside className="bg-white border border-slate-100 premium-shadow rounded-3xl p-4 sm:p-6 h-fit space-y-5">
+        <aside className="bg-white border border-slate-100 premium-shadow rounded-3xl p-4 sm:p-6 h-fit space-y-5 min-w-0">
           <button onClick={handleChat} className="w-full border border-slate-200 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50">
             <MessageSquare size={18} /> {t('common.chat')}
           </button>

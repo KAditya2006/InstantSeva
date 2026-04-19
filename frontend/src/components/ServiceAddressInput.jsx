@@ -14,7 +14,7 @@ const ServiceAddressInput = ({ value, onChange }) => {
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-50 p-1 border border-slate-100">
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-2 rounded-2xl bg-slate-50 p-1 border border-slate-100">
         <button
           type="button"
           onClick={() => switchMode('search')}

@@ -186,13 +186,13 @@ const Dashboard = () => {
         </header>
 
         <section className="bg-white rounded-3xl border border-slate-100 premium-shadow p-5 sm:p-8 space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-            <div>
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5 min-w-0">
+            <div className="min-w-0">
               <p className="text-sm font-bold uppercase tracking-widest text-primary-600">{t('dashboard.bookService')}</p>
               <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 mt-2">{t('dashboard.needToday')}</h2>
               <p className="text-slate-500 font-medium mt-2">{t('dashboard.compareExperts')}</p>
             </div>
-            <form onSubmit={handleServiceSearch} className="w-full lg:max-w-md bg-slate-50 rounded-2xl border border-slate-100 p-2 flex flex-col sm:flex-row gap-2">
+            <form onSubmit={handleServiceSearch} className="w-full lg:max-w-md bg-slate-50 rounded-2xl border border-slate-100 p-2 flex flex-col sm:flex-row gap-2 min-w-0">
               <div className="flex items-center gap-3 flex-1 px-3">
                 <SearchIcon size={18} className="text-slate-400 shrink-0" />
                 <input
@@ -218,7 +218,7 @@ const Dashboard = () => {
                 key={name}
                 type="button"
                 onClick={() => openServiceSearch(name)}
-                className={`${color} min-h-36 rounded-2xl border border-slate-100 p-4 text-left flex flex-col justify-between gap-4 hover:-translate-y-1 hover:premium-shadow transition-all`}
+                className={`${color} min-h-36 rounded-2xl border border-slate-100 p-4 text-left flex flex-col justify-between gap-4 hover:-translate-y-1 hover:premium-shadow transition-all min-w-0`}
               >
                 <span className="w-11 h-11 rounded-xl bg-white flex items-center justify-center premium-shadow">
                   {React.createElement(Icon, { size: 24, className: iconColor })}
@@ -252,7 +252,7 @@ const Dashboard = () => {
               <article
                 key={booking._id}
                 onClick={() => setSelectedBooking(booking)}
-                className="bg-white rounded-3xl border border-slate-100 premium-shadow p-4 sm:p-6 flex flex-col lg:flex-row gap-5 lg:items-center justify-between cursor-pointer hover:-translate-y-0.5 transition-all"
+                className="bg-white rounded-3xl border border-slate-100 premium-shadow p-4 sm:p-6 flex flex-col lg:flex-row gap-5 lg:items-center justify-between cursor-pointer hover:-translate-y-0.5 transition-all min-w-0"
               >
                 <div className="space-y-2 min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
@@ -292,12 +292,12 @@ const Dashboard = () => {
 
                 <div className="flex flex-wrap gap-3 lg:justify-end" onClick={(event) => event.stopPropagation()}>
                   {booking.status === 'accepted' && (
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex w-full flex-col sm:w-auto sm:flex-row gap-2">
                       <div className="relative">
                         <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                           placeholder={t('dashboard.workerOtp')}
-                          className="pl-10 pr-4 py-2 rounded-xl border border-slate-200 outline-none w-36 font-bold"
+                          className="pl-10 pr-4 py-2 rounded-xl border border-slate-200 outline-none w-full sm:w-36 font-bold"
                           value={otpInput[booking._id] || ''}
                           onChange={(e) => setOtpInput({ ...otpInput, [booking._id]: e.target.value })}
                         />
